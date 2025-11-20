@@ -1,0 +1,66 @@
+
+<div class="settings-container">
+  <nav class="navbar">
+    <div class="nav-content">
+      <h2>GoPark - Paramètres</h2>
+      <button class="btn-logout" (click)="onLogout()">Déconnexion</button>
+    </div>
+  </nav>
+  
+  <main class="main-content">
+    <div class="settings-card">
+      <h1>Paramètres du compte</h1>
+      
+      @if (error()) {
+        <div class="error-message">{{ error() }}</div>
+      }
+      
+      @if (success()) {
+        <div class="success-message">{{ success() }}</div>
+      }
+      
+      <section class="settings-section">
+        <h2>Informations du compte</h2>
+        @if (authService.currentUser(); as user) {
+          <div class="info-item">
+            <label>Email:</label>
+            <span>{{ user.email }}</span>
+          </div>
+          <div class="info-item">
+            <label>Statut de vérification:</label>
+            <span class="status" [class.verified]="user.emailVerified">
+              {{ user.emailVerified ? '✓ Vérifié' : '✗ Non vérifié' }}
+            </span>
+          </div>
+          
+          @if (!user.emailVerified) {
+            <button 
+              class="btn btn-secondary" 
+              (click)="onResendVerification()" 
+              [disabled]="loading()">
+              {{ loading() ? 'Envoi...' : 'Renvoyer l\'email de vérification' }}
+            </button>
+          }
+        }
+      </section>
+      
+      <section class="settings-section">
+        <h2>Authentification à deux facteurs (A2F)</h2>
+        <div class="info-item">
+          <label>Statut:</label>
+          <span class="status" [class.enabled]="authService.hasMFA()">
+            {{ authService.hasMFA() ? '✓ Activée' : '✗ Désactivée' }}
+          </span>
+        </div>
+        <p class="info-text">
+          L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
+          Cette fonctionnalité nécessite une configuration Firebase supplémentaire.
+        </p>
+      </section>
+      
+      <div class="actions">
+        <a routerLink="/home" class="btn btn-outline">Retour à l'accueil</a>
+      </div>
+    </div>
+  </main>
+</div>

@@ -5,12 +5,21 @@
       <h2>GoPark</h2>
       <div class="user-info">
         <span>{{ authService.currentUser()?.email }}</span>
+        <a routerLink="/settings" class="btn-settings">Paramètres</a>
         <button class="btn-logout" (click)="onLogout()">Déconnexion</button>
       </div>
     </div>
   </nav>
   
   <main class="main-content">
+    @if (authService.currentUser() && !authService.currentUser()!.emailVerified) {
+      <div class="verification-alert">
+        <strong>⚠️ Vérification requise</strong>
+        <p>Veuillez vérifier votre adresse email. Consultez votre boîte de réception.</p>
+        <a routerLink="/settings">Renvoyer l'email de vérification</a>
+      </div>
+    }
+    
     <div class="welcome-card">
       <h1>Bienvenue sur GoPark ! 🎉</h1>
       <p>Vous êtes maintenant connecté avec succès.</p>

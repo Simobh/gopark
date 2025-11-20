@@ -140,3 +140,19 @@ input:focus {
 .auth-footer a:hover {
   text-decoration: underline;
 }
+
+.forgot-password {
+  text-align: center;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.forgot-password a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.forgot-password a:hover {
+  text-decoration: underline;
+}
