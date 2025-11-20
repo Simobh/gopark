@@ -56,6 +56,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 5000,
+            "host": "0.0.0.0",
+            "allowedHosts": ["all"]
+          },
           "configurations": {
             "production": {
               "buildTarget": "gopark:build:production"

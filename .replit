@@ -1,0 +1,43 @@
+modules = ["web", "nodejs-20"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Angular Dev Server"
+
+[[workflows.workflow]]
+name = "Angular Dev Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "ng serve"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 43913
+externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "dist/gopark/server/server.mjs"]
+build = ["npm", "run", "build"]
