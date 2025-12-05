@@ -1,0 +1,10 @@
+#home {
+    position: relative;
+    .overlay {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .content {
+      z-index: 2;
+    }
+  }
+  
