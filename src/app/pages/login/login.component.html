@@ -7,7 +7,9 @@
       <div class="error-message">{{ error() }}</div>
     }
     
-    <form (submit)="onEmailLogin(); $event.preventDefault()">
+    @if (!mfaRequired()) {
+      <!-- Formulaire de connexion normal -->
+      <form (submit)="onEmailLogin(); $event.preventDefault()">
       <div class="form-group">
         <label for="email">Email</label>
         <input 
@@ -58,5 +60,79 @@
     <p class="auth-footer">
       Pas encore de compte ? <a routerLink="/register">S'inscrire</a>
     </p>
+    } @else {
+      <!-- Formulaire A2F pour la connexion -->
+      <div class="mfa-login">
+        <h2>Authentification à deux facteurs</h2>
+        <p class="info-text">Votre compte est protégé par l'A2F. Veuillez entrer le code reçu par SMS.</p>
+        
+        @if (mfaStep() === 'idle' || mfaStep() === 'sending') {
+          <div class="mfa-form">
+            <div class="form-group">
+              <label for="mfa-phone-login">Numéro de téléphone</label>
+              <input 
+                type="tel" 
+                id="mfa-phone-login"
+                [value]="mfaPhoneNumber()"
+                (input)="mfaPhoneNumber.set($any($event.target).value)"
+                placeholder="+33612345678"
+                [disabled]="mfaLoading() || mfaStep() === 'sending'"
+              />
+              <small class="form-hint">Format international requis (ex: +33612345678)</small>
+            </div>
+            <button 
+              class="btn btn-primary" 
+              (click)="onSendMFACode()" 
+              [disabled]="mfaLoading() || !mfaPhoneNumber().trim() || mfaStep() === 'sending'">
+              {{ mfaLoading() || mfaStep() === 'sending' ? 'Envoi...' : 'Envoyer le code SMS' }}
+            </button>
+            @if (mfaStep() === 'sending') {
+              <div class="mfa-form">
+                <p class="info-text">Veuillez compléter le reCAPTCHA ci-dessous pour recevoir le code SMS.</p>
+                <div id="recaptcha-container" style="min-height: 78px; margin: 20px 0; display: flex; justify-content: center;"></div>
+                <p class="info-text" style="margin-top: 10px; font-size: 12px; color: #999;">Le code SMS sera envoyé après la vérification reCAPTCHA.</p>
+              </div>
+            }
+            <button 
+              class="btn btn-outline" 
+              (click)="onCancelMFA()" 
+              [disabled]="mfaLoading()"
+              style="margin-top: 12px;">
+              Retour
+            </button>
+          </div>
+        } @else if (mfaStep() === 'verifying') {
+          <div class="mfa-form">
+            <div class="form-group">
+              <label for="mfa-code-login">Code de vérification</label>
+              <input 
+                type="text" 
+                id="mfa-code-login"
+                [value]="mfaVerificationCode()"
+                (input)="mfaVerificationCode.set($any($event.target).value)"
+                placeholder="123456"
+                maxlength="6"
+                [disabled]="mfaLoading()"
+              />
+              <small class="form-hint">Entrez le code à 6 chiffres reçu par SMS</small>
+            </div>
+            <div class="mfa-actions">
+              <button 
+                class="btn btn-primary" 
+                (click)="onVerifyMFACode()" 
+                [disabled]="mfaLoading() || !mfaVerificationCode().trim()">
+                {{ mfaLoading() ? 'Vérification...' : 'Vérifier et se connecter' }}
+              </button>
+              <button 
+                class="btn btn-outline" 
+                (click)="onCancelMFA()" 
+                [disabled]="mfaLoading()">
+                Annuler
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
 </div>

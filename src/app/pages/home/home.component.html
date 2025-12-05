@@ -10,30 +10,25 @@
       </div>
     </div>
   </nav>
-  
+
   <main class="main-content">
     @if (authService.currentUser() && !authService.currentUser()!.emailVerified) {
       <div class="verification-alert">
-        <strong>⚠️ Vérification requise</strong>
+        <strong>Vérification requise</strong>
         <p>Veuillez vérifier votre adresse email. Consultez votre boîte de réception.</p>
         <a routerLink="/settings">Renvoyer l'email de vérification</a>
       </div>
     }
-    
+
     <div class="welcome-card">
-      <h1>Bienvenue sur GoPark ! 🎉</h1>
+      <h1>Bienvenue sur GoPark</h1>
       <p>Vous êtes maintenant connecté avec succès.</p>
-      
+
       @if (authService.currentUser(); as user) {
         <div class="user-details">
           <p><strong>Email:</strong> {{ user.email }}</p>
-          <p><strong>UID:</strong> {{ user.uid }}</p>
         </div>
       }
-      
-      <div class="info-box">
-        <p>Votre application d'authentification est maintenant fonctionnelle ! Vous pouvez commencer à développer vos fonctionnalités.</p>
-      </div>
     </div>
   </main>
 </div>

@@ -17,6 +17,7 @@ export class RegisterComponent {
   password = signal('');
   confirmPassword = signal('');
   error = signal('');
+  success = signal('');
   loading = signal(false);
   
   async onRegister() {
@@ -32,11 +33,14 @@ export class RegisterComponent {
     
     this.loading.set(true);
     this.error.set('');
+    this.success.set('');
     
     try {
       await this.authService.registerWithEmail(this.email(), this.password());
+      this.success.set('Inscription réussie ! Un email de vérification a été envoyé à ' + this.email() + '. Veuillez vérifier votre boîte de réception (et vos spams).');
     } catch (error: any) {
-      this.error.set(error);
+      console.error('Erreur lors de l\'inscription:', error);
+      this.error.set(typeof error === 'string' ? error : error.message || 'Une erreur est survenue');
     } finally {
       this.loading.set(false);
     }

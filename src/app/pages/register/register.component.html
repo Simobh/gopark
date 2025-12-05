@@ -7,6 +7,10 @@
       <div class="error-message">{{ error() }}</div>
     }
     
+    @if (success()) {
+      <div class="success-message">{{ success() }}</div>
+    }
+    
     <form (submit)="onRegister(); $event.preventDefault()">
       <div class="form-group">
         <label for="email">Email</label>
