@@ -5,9 +5,11 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:static": "ng build --configuration static",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:gopark": "node dist/gopark/server/server.mjs"
+    "serve:ssr:gopark": "node dist/gopark/server/server.mjs",
+    "deploy": "npm run build:static && powershell -Command \"if (Test-Path 'dist/gopark/browser/index.csr.html') { Copy-Item 'dist/gopark/browser/index.csr.html' 'dist/gopark/browser/index.html' -Force }\" && firebase deploy --only hosting"
   },
   "prettier": {
     "printWidth": 100,
