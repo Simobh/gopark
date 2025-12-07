@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { MatCard, MatCardContent } from "@angular/material/card";
 
 @Component({
   selector: 'app-services',
-  imports: [MatCard, MatCardContent],
+  imports: [],
   templateUrl: './services.html',
   styleUrl: './services.css'
 })

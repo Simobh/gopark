@@ -1,0 +1,123 @@
+#contact {
+  padding: 4rem 0;
+}
+
+.contact-section-title {
+  color: #28a745;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.contact-subtitle {
+  font-weight: 700;
+  color: #212529;
+  font-size: 1.5rem;
+}
+
+.contact-form .form-label {
+  font-weight: 500;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.contact-form .form-control {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+.contact-form .form-control:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-check-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.btn-submit {
+  background-color: #28a745;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+  background-color: #218838;
+  color: white;
+}
+
+.contact-info-box {
+  background-color: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  height: 100%;
+}
+
+.contact-info-title {
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.contact-icon {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+}
+
+.contact-link {
+  color: #212529;
+  text-decoration: underline;
+  text-decoration-color: #212529;
+}
+
+.contact-link:hover {
+  color: #28a745;
+  text-decoration-color: #28a745;
+}
+
+.contact-hours {
+  margin-top: 2rem;
+}
+
+.hours-title {
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.hours-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.hours-item .day {
+  font-weight: 500;
+  color: #212529;
+}
+
+.hours-item .time {
+  color: #6c757d;
+}
+

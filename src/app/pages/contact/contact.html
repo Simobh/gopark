@@ -1,29 +1,35 @@
 <section id="contact" class="py-5 container">
-    <h2 class="fw-bold mb-4">Nous joindre</h2>
     <div class="row">
       <div class="col-md-6">
-        <form>
+        <h5 class="contact-section-title">NOUS JOINDRE</h5>
+        <h2 class="contact-subtitle mb-4">Pour toute question ou demande.</h2>
+        <form class="contact-form">
           <div class="mb-3">
-            <label for="name" class="form-label">Nom</label>
-            <input id="name" type="text" class="form-control" required>
+            <label for="name" class="form-label">Nom*</label>
+            <input id="name" type="text" class="form-control" placeholder="Jane Smith" required>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input id="email" type="email" class="form-control" required>
+            <label for="email" class="form-label">Adresse e-mail*</label>
+            <input id="email" type="email" class="form-control" placeholder="email@website.com" required>
+          </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">Numéro de téléphone</label>
+            <input id="phone" type="tel" class="form-control" placeholder="555-555-5555">
           </div>
           <div class="mb-3">
             <label for="message" class="form-label">Message</label>
-            <textarea id="message" class="form-control" rows="3"></textarea>
+            <textarea id="message" class="form-control" rows="4"></textarea>
           </div>
-          <button type="submit" class="btn btn-success">Submit</button>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="consent" required>
+            <label class="form-check-label" for="consent">
+              J'autorise ce site à conserver ma soumission afin qu'il puisse répondre à ma demande.
+            </label>
+          </div>
+          <button type="submit" class="btn btn-submit">ENVOYER</button>
         </form>
       </div>
-      <div class="col-md-6">
-        <h5>Contact</h5>
-        <p> Paris, HDF France</p>
-        <p>gopark.management@gmail.com</p>
-        <p>Lun–Ven : 00h00 – 23h59</p>
-      </div>
+
     </div>
   </section>
-  
+

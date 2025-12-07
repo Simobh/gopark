@@ -1,12 +1,5 @@
-
+<app-navbar></app-navbar>
 <div class="settings-container">
-  <nav class="navbar">
-    <div class="nav-content">
-      <h2>GoPark - Paramètres</h2>
-      <button class="btn-logout" (click)="onLogout()">Déconnexion</button>
-    </div>
-  </nav>
-
   <main class="main-content">
     <div class="settings-card">
       <h1>Paramètres du compte</h1>
@@ -53,7 +46,6 @@
         </div>
 
         @if (authService.hasMFA()) {
-          <!-- A2F activée - Afficher les facteurs et option de désactivation -->
           <div class="mfa-info">
             <p class="info-text">
               L'authentification à deux facteurs est activée. Votre compte est protégé par une couche de sécurité supplémentaire.
@@ -82,7 +74,6 @@
             </button>
           </div>
         } @else {
-          <!-- A2F non activée - Formulaire d'activation -->
           <div class="mfa-setup">
             <p class="info-text">
               L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
@@ -90,7 +81,6 @@
             </p>
 
             @if (mfaStep() === 'idle') {
-              <!-- Étape 1: Entrer le numéro de téléphone -->
               <div class="mfa-form">
                 <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Activer l'A2F</h3>
                 <div class="form-group">
@@ -115,14 +105,12 @@
                 </button>
               </div>
             } @else if (mfaStep() === 'sending') {
-              <!-- Envoi en cours -->
               <div class="mfa-form">
                 <p class="info-text">Veuillez compléter le reCAPTCHA ci-dessous pour recevoir le code SMS.</p>
                 <div id="recaptcha-container" style="min-height: 78px; margin: 20px 0; display: flex; justify-content: center;"></div>
                 <p class="info-text" style="margin-top: 10px; font-size: 12px; color: #999;">Le code SMS sera envoyé après la vérification reCAPTCHA.</p>
               </div>
             } @else if (mfaStep() === 'needs-reauth') {
-              <!-- Étape de reauthentification -->
               <div class="mfa-form">
                 <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Reconnexion requise</h3>
                 <p class="info-text" style="color: #ff6b6b; margin-bottom: 20px;">
@@ -157,7 +145,6 @@
                 </div>
               </div>
             } @else if (mfaStep() === 'verifying') {
-              <!-- Étape 2: Vérifier le code -->
               <div class="mfa-form">
                 <div class="form-group">
                   <label for="mfa-code">Code de vérification</label>
