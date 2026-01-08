@@ -39,7 +39,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    provideDatabase(() => getDatabase()), provideFirebaseApp(() => initializeApp({ projectId: "gopark-5aaa3", appId: "1:95612175459:web:666d6b87a31e3bfaae6456", storageBucket: "gopark-5aaa3.firebasestorage.app", apiKey: "AIzaSyBL-dfD1K1BvgY-qpmM_uXtbTl_vPmyLn8", authDomain: "gopark-5aaa3.firebaseapp.com", messagingSenderId: "95612175459", projectNumber: "95612175459", version: "2" })), provideAuth(() => getAuth()), provideFirestore(() => getFirestore()), provideDatabase(() => getDatabase())
+    provideDatabase(() => getDatabase())
   ],
 };
 
