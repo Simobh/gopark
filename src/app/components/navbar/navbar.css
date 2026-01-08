@@ -1,3 +1,7 @@
+/* =========================
+   NAVBAR
+========================= */
+
 .navbar {
   background: white !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -14,6 +18,10 @@
   width: auto;
   object-fit: contain;
 }
+
+/* =========================
+   NAV LINKS
+========================= */
 
 .nav-link {
   font-weight: 500;
@@ -42,6 +50,10 @@
   background-color: #28a745;
 }
 
+/* =========================
+   BUTTONS
+========================= */
+
 .btn-outline-dark {
   border: 2px solid #000;
   border-radius: 0;
@@ -56,3 +68,50 @@
   background-color: #000;
   color: #fff;
 }
+
+/* =========================
+   DROPDOWN PROFIL (FIX FINAL)
+========================= */
+
+/* Conteneur dropdown */
+.dropdown-menu {
+  border: 2px solid #000;
+  border-radius: 0;
+  padding: 0;
+  min-width: 200px;
+  overflow: hidden; /* 🔑 empêche TOUT débordement */
+}
+
+/* Reset Bootstrap */
+.dropdown-menu li {
+  margin: 0;
+  padding: 0;
+}
+
+/* Items */
+.dropdown-item {
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 0;
+  background-color: #fff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover normal */
+.dropdown-item:hover {
+  background-color: #000;
+  color: #fff;
+}
+
+/* Hover déconnexion */
+.dropdown-item.text-danger:hover {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+/* Séparateur */
+.dropdown-divider {
+  margin: 0;
+}
+
+

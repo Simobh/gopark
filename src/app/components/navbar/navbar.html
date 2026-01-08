@@ -23,9 +23,42 @@
           </li>
         </ul>
         @if (authService.currentUser(); as user) {
-          <a routerLink="/settings" class="btn btn-outline-dark ms-3">PARAMÈTRES</a>
-          <button class="btn btn-outline-dark ms-3" (click)="onLogout()">DÉCONNEXION</button>
-        } @else {
+            <div class="dropdown ms-3">
+              <button
+                class="btn dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+                PROFIL
+              </button>
+          
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item" routerLink="/favorites">
+                     Mes favoris
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" routerLink="/history">
+                     Historique
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" routerLink="/settings">
+                     Paramètres
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <button class="dropdown-item text-danger" (click)="onLogout()">
+                     Déconnexion
+                  </button>
+                </li>
+              </ul>
+            </div>
+          }
+           @else {
           <a routerLink="/login" class="btn btn-outline-dark ms-3">SE CONNECTER</a>
         }
       </div>
