@@ -35,7 +35,6 @@ export const routes: Routes = [
     path: 'search',
     loadComponent: () =>
       import('./pages/parkings/parkings.component').then(m => m.ParkingsComponent),
-    canActivate: [publicGuard],
   },
   {
     path: '**',

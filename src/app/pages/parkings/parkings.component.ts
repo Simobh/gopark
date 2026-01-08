@@ -1,10 +1,14 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ParkingService } from '../../services/api.service';
 import { City } from '../../models/city.model';
 
 @Component({
   selector: 'app-parkings',
-  templateUrl: './parkings.component.html'
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './parkings.component.html',
+  styleUrl: './parkings.component.css'
 })
 export class ParkingsComponent implements OnInit {
 
