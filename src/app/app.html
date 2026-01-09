@@ -1,1 +1,23 @@
 <router-outlet></router-outlet>
+
+<button
+  type="button"
+  class="btn btn-success rounded-circle shadow position-fixed bottom-0 end-0 m-3 d-flex align-items-center justify-content-center transition"
+  style="
+    width:44px;height:44px;
+    outline: none;
+    transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+  "
+  (click)="scrollTop()"
+  [class.opacity-0]="!showBackToTop"
+  [class.opacity-100]="showBackToTop"
+  [class.pe-none]="!showBackToTop"
+  aria-label="Remonter en haut"
+  onmouseenter="this.style.transform='scale(1.07)'"
+  onmouseleave="this.style.transform='scale(1)'"
+>
+  ↑
+</button>
+
+
+

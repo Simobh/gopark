@@ -15,3 +15,34 @@ body {
 html, body {
   height: 100%;
 }
+
+/* ===== BOUTON BACK TO TOP ===== */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+
+  background-color: #16a34a; 
+  color: white;
+  border: none;
+
+  font-size: 18px;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(22, 163, 74, 0.45);
+}

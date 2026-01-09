@@ -1,187 +1,351 @@
-<app-navbar></app-navbar>
-<div class="settings-container">
-  <main class="main-content">
-    <div class="settings-card">
-      <h1>Paramètres du compte</h1>
+<!-- ✅ NAVBAR : enlève si tu ne la veux pas -->
+<!-- <app-navbar></app-navbar> -->
 
-      @if (error()) {
-        <div class="error-message">{{ error() }}</div>
-      }
+<div class="container-fluid py-4" style="max-width: 1200px;">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <!-- Logo -->
+      <img
+        src="assets/images/logo.png"
+        alt="GoPark"
+        class="img-fluid"
+        style="height: 55px; width: auto;"
+      />
+      <h2 class="m-0 fw-semibold" style="font-size: 30px; line-height: 1;">
+        Paramètres du compte
+      </h2>
+    </div>
 
-      @if (success()) {
-        <div class="success-message">{{ success() }}</div>
-      }
+    <div class="d-flex align-items-center gap-2">
+      <img
+        [src]="avatarPreviewUrl() || 'assets/images/logo.png'"
+        alt="Photo de profil"
+        class="rounded-circle"
+        style="width: 40px; height: 40px; object-fit: cover;"
+      />
+      <span class="fw-semibold">Compte</span>
+      <i class="bi bi-chevron-down"></i>
+    </div>
+  </div>
 
-      <section class="settings-section">
-        <h2>Informations du compte</h2>
-        @if (authService.currentUser(); as user) {
-          <div class="info-item">
-            <label>Email:</label>
-            <span>{{ user.email }}</span>
-          </div>
-          <div class="info-item">
-            <label>Statut de vérification:</label>
-            <span class="status" [class.verified]="user.emailVerified">
-              {{ user.emailVerified ? '✓ Vérifié' : '✗ Non vérifié' }}
-            </span>
-          </div>
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+  }
 
-          @if (!user.emailVerified) {
-            <button
-              class="btn btn-secondary"
-              (click)="onResendVerification()"
-              [disabled]="loading()">
-              {{ loading() ? 'Envoi...' : 'Renvoyer l\'email de vérification' }}
-            </button>
-          }
-        }
-      </section>
+  @if (success()) {
+    <div class="alert alert-success" role="alert">{{ success() }}</div>
+  }
 
-      <section class="settings-section mfa-section">
-        <div class="section-header">
-          <h2> Authentification à deux facteurs (A2F)</h2>
-          <span class="status-badge" [class.enabled]="authService.hasMFA()">
-            {{ authService.hasMFA() ? '✓ Activée' : '✗ Désactivée' }}
-          </span>
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-12 col-lg-3">
+      <div class="card border-0 shadow-sm">
+        <div class="list-group list-group-flush rounded-3">
+          <button
+            type="button"
+            class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+            [class.active]="activeTab() === 'profile'"
+            (click)="activeTab.set('profile')"
+          >
+            <i class="bi bi-person"></i> Profil
+          </button>
+
+          <button
+            type="button"
+            class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+            [class.active]="activeTab() === 'password'"
+            (click)="activeTab.set('password')"
+          >
+            <i class="bi bi-lock"></i> Mot de passe
+          </button>
+
+          <button
+            type="button"
+            class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+            [class.active]="activeTab() === 'verification'"
+            (click)="activeTab.set('verification')"
+          >
+            <i class="bi bi-patch-check"></i> Vérification
+          </button>
+
+          <button
+            type="button"
+            class="list-group-item list-group-item-action d-flex align-items-center gap-2 text-danger"
+            [class.active]="activeTab() === 'delete'"
+            (click)="activeTab.set('delete')"
+          >
+            <i class="bi bi-trash"></i> Supprimer le compte
+          </button>
         </div>
+      </div>
+    </div>
 
-        @if (authService.hasMFA()) {
-          <div class="mfa-info">
-            <p class="info-text">
-              L'authentification à deux facteurs est activée. Votre compte est protégé par une couche de sécurité supplémentaire.
-            </p>
-            @if (authService.getMFAFactors().length > 0) {
-              <div class="mfa-factors">
-                <h3>Facteurs enregistrés:</h3>
-                @for (factor of authService.getMFAFactors(); track factor.uid) {
-                  <div class="mfa-factor-item">
-                    <span class="factor-icon">📱</span>
-                    <div class="factor-details">
-                      <strong>{{ factor.displayName }}</strong>
-                      @if (factor.phoneNumber) {
-                        <span class="factor-phone">{{ factor.phoneNumber }}</span>
-                      }
-                    </div>
+    <!-- Main -->
+    <div class="col-12 col-lg-9">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 p-lg-5">
+          <!-- Header card: avatar + edit -->
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center gap-4">
+              <div class="position-relative d-inline-block">
+                <img
+                  [src]="avatarPreviewUrl() || 'assets/images/logo.png'"
+                  alt="Photo de profil"
+                  class="rounded-circle"
+                  style="width: 120px; height: 120px; object-fit: cover;"
+                />
+
+                <button
+                  type="button"
+                  class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center shadow"
+                  style="width: 40px; height: 40px;"
+                  aria-label="Changer la photo"
+                  (click)="fileInput.click()"
+                >
+                  <i class="bi bi-camera-fill"></i>
+                </button>
+
+                <input
+                  #fileInput
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  (change)="onAvatarSelected($event)"
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary d-flex align-items-center gap-2"
+              (click)="editMode.set(!editMode())"
+            >
+              <i class="bi bi-pencil"></i>
+              {{ editMode() ? 'Annuler' : 'Modifier' }}
+            </button>
+          </div>
+
+          <!-- ONGLET PROFIL -->
+          @if (activeTab() === 'profile') {
+            <div class="row g-4">
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                <input class="form-control" placeholder="Prénom" [disabled]="!editMode()" />
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                <input class="form-control" placeholder="Nom" [disabled]="!editMode()" />
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Email</label>
+                @if (authService.currentUser(); as user) {
+                  <input class="form-control" [value]="user.email" disabled />
+                }
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Numéro de téléphone <span class="text-danger">*</span></label>
+                <input class="form-control" placeholder="+33612345678" [disabled]="!editMode()" />
+              </div>
+
+              <!-- Statut vérification -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">Statut de vérification</label>
+
+                @if (authService.currentUser(); as user) {
+                  <div class="border rounded-3 p-3 d-flex align-items-center justify-content-between">
+                    <span
+                      class="badge rounded-pill"
+                      [class.text-bg-success]="user.emailVerified"
+                      [class.text-bg-danger]="!user.emailVerified"
+                    >
+                      {{ user.emailVerified ? '✓ Vérifié' : '✗ Non vérifié' }}
+                    </span>
+
+                    @if (!user.emailVerified) {
+                      <button class="btn btn-outline-secondary" (click)="onResendVerification()" [disabled]="loading()">
+                        {{ loading() ? 'Envoi...' : 'Renvoyer l’email' }}
+                      </button>
+                    }
                   </div>
                 }
               </div>
-            }
-            <button
-              class="btn btn-danger"
-              (click)="onDisableMFA()"
-              [disabled]="mfaLoading()">
-              {{ mfaLoading() ? 'Désactivation...' : 'Désactiver l\'A2F' }}
-            </button>
-          </div>
-        } @else {
-          <div class="mfa-setup">
-            <p class="info-text">
-              L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
-              Vous recevrez un code SMS à chaque connexion.
-            </p>
 
-            @if (mfaStep() === 'idle') {
-              <div class="mfa-form">
-                <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Activer l'A2F</h3>
-                <div class="form-group">
-                  <label for="mfa-phone">Numéro de téléphone</label>
-                  <input
-                    type="tel"
-                    id="mfa-phone"
-                    [value]="mfaPhoneNumber()"
-                    (input)="mfaPhoneNumber.set($any($event.target).value)"
-                    placeholder="+33612345678"
-                    [disabled]="mfaLoading()"
-                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; box-sizing: border-box;"
-                  />
-                  <small class="form-hint">Format international requis (ex: +33612345678)</small>
-                </div>
-                <button
-                  class="btn btn-primary"
-                  (click)="onSendMFAVerificationCode()"
-                  [disabled]="mfaLoading() || !mfaPhoneNumber().trim()"
-                  style="width: 100%; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px;">
-                  {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
+              <div class="col-12 d-flex justify-content-center mt-3">
+                <button type="button" class="btn btn-primary px-5 shadow" [disabled]="!editMode()">
+                  Enregistrer les modifications
                 </button>
               </div>
-            } @else if (mfaStep() === 'sending') {
-              <div class="mfa-form">
-                <p class="info-text">Veuillez compléter le reCAPTCHA ci-dessous pour recevoir le code SMS.</p>
-                <div id="recaptcha-container" style="min-height: 78px; margin: 20px 0; display: flex; justify-content: center;"></div>
-                <p class="info-text" style="margin-top: 10px; font-size: 12px; color: #999;">Le code SMS sera envoyé après la vérification reCAPTCHA.</p>
-              </div>
-            } @else if (mfaStep() === 'needs-reauth') {
-              <div class="mfa-form">
-                <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Reconnexion requise</h3>
-                <p class="info-text" style="color: #ff6b6b; margin-bottom: 20px;">
-                  Pour des raisons de sécurité, une reconnexion récente est requise pour activer l'A2F.
-                </p>
-                <div class="form-group">
-                  <label for="mfa-password">Mot de passe</label>
-                  <input
-                    type="password"
-                    id="mfa-password"
-                    [value]="mfaPassword()"
-                    (input)="mfaPassword.set($any($event.target).value)"
-                    placeholder="Votre mot de passe"
-                    [disabled]="mfaLoading()"
-                    style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; box-sizing: border-box;"
-                  />
-                  <small class="form-hint">Entrez votre mot de passe pour confirmer votre identité</small>
-                </div>
-                <div class="mfa-actions">
-                  <button
-                    class="btn btn-primary"
-                    (click)="onReauthenticateAndSendCode()"
-                    [disabled]="mfaLoading() || !mfaPassword().trim()">
-                    {{ mfaLoading() ? 'Vérification...' : 'Continuer' }}
-                  </button>
-                  <button
-                    class="btn btn-outline"
-                    (click)="onCancelMFA()"
-                    [disabled]="mfaLoading()">
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            } @else if (mfaStep() === 'verifying') {
-              <div class="mfa-form">
-                <div class="form-group">
-                  <label for="mfa-code">Code de vérification</label>
-                  <input
-                    type="text"
-                    id="mfa-code"
-                    [value]="mfaVerificationCode()"
-                    (input)="mfaVerificationCode.set($any($event.target).value)"
-                    placeholder="123456"
-                    maxlength="6"
-                    [disabled]="mfaLoading()"
-                  />
-                  <small class="form-hint">Entrez le code à 6 chiffres reçu par SMS</small>
-                </div>
-                <div class="mfa-actions">
-                  <button
-                    class="btn btn-primary"
-                    (click)="onVerifyMFA()"
-                    [disabled]="mfaLoading() || !mfaVerificationCode().trim()">
-                    {{ mfaLoading() ? 'Vérification...' : 'Activer l\'A2F' }}
-                  </button>
-                  <button
-                    class="btn btn-outline"
-                    (click)="onCancelMFA()"
-                    [disabled]="mfaLoading()">
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </section>
+            </div>
+          }
 
-      <div class="actions">
-        <a routerLink="/home" class="btn btn-outline">Retour à l'accueil</a>
+          <!-- ONGLET MOT DE PASSE -->
+          @if (activeTab() === 'password') {
+            <div class="alert alert-info mb-0">
+              Ajoute ici ton formulaire de changement de mot de passe.
+            </div>
+          }
+
+          <!-- ONGLET VERIFICATION => Ton A2F existant (inchangé) -->
+          @if (activeTab() === 'verification') {
+            <section class="settings-section mfa-section">
+              <div class="section-header">
+                <h2>Authentification à deux facteurs (A2F)</h2>
+                <span class="status-badge" [class.enabled]="authService.hasMFA()">
+                  {{ authService.hasMFA() ? '✓ Activée' : '✗ Désactivée' }}
+                </span>
+              </div>
+
+              @if (authService.hasMFA()) {
+                <div class="mfa-info">
+                  <p class="info-text">
+                    L'authentification à deux facteurs est activée. Votre compte est protégé par une couche de sécurité supplémentaire.
+                  </p>
+
+                  @if (authService.getMFAFactors().length > 0) {
+                    <div class="mfa-factors">
+                      <h3>Facteurs enregistrés:</h3>
+                      @for (factor of authService.getMFAFactors(); track factor.uid) {
+                        <div class="mfa-factor-item">
+                          <span class="factor-icon">📱</span>
+                          <div class="factor-details">
+                            <strong>{{ factor.displayName }}</strong>
+                            @if (factor.phoneNumber) {
+                              <span class="factor-phone">{{ factor.phoneNumber }}</span>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <button class="btn btn-danger" (click)="onDisableMFA()" [disabled]="mfaLoading()">
+                    {{ mfaLoading() ? 'Désactivation...' : 'Désactiver l’A2F' }}
+                  </button>
+                </div>
+              } @else {
+                <div class="mfa-setup">
+                  <p class="info-text">
+                    L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
+                    Vous recevrez un code SMS à chaque connexion.
+                  </p>
+
+                  @if (mfaStep() === 'idle') {
+                    <div class="mfa-form">
+                      <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Activer l'A2F</h3>
+
+                      <div class="form-group">
+                        <label for="mfa-phone">Numéro de téléphone</label>
+                        <input
+                          type="tel"
+                          id="mfa-phone"
+                          [value]="mfaPhoneNumber()"
+                          (input)="mfaPhoneNumber.set($any($event.target).value)"
+                          placeholder="+33612345678"
+                          [disabled]="mfaLoading()"
+                        />
+                        <small class="form-hint">Format international requis (ex: +33612345678)</small>
+                      </div>
+
+                      <button
+                        class="btn btn-primary"
+                        (click)="onSendMFAVerificationCode()"
+                        [disabled]="mfaLoading() || !mfaPhoneNumber().trim()"
+                        style="width: 100%;"
+                      >
+                        {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
+                      </button>
+                    </div>
+                  } @else if (mfaStep() === 'sending') {
+                    <div class="mfa-form">
+                      <p class="info-text">Veuillez compléter le reCAPTCHA ci-dessous pour recevoir le code SMS.</p>
+                      <div id="recaptcha-container" style="min-height: 78px; margin: 20px 0; display: flex; justify-content: center;"></div>
+                      <p class="info-text" style="margin-top: 10px; font-size: 12px; color: #999;">
+                        Le code SMS sera envoyé après la vérification reCAPTCHA.
+                      </p>
+                    </div>
+                  } @else if (mfaStep() === 'needs-reauth') {
+                    <div class="mfa-form">
+                      <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Reconnexion requise</h3>
+                      <p class="info-text" style="color: #ff6b6b; margin-bottom: 20px;">
+                        Pour des raisons de sécurité, une reconnexion récente est requise pour activer l'A2F.
+                      </p>
+
+                      <div class="form-group">
+                        <label for="mfa-password">Mot de passe</label>
+                        <input
+                          type="password"
+                          id="mfa-password"
+                          [value]="mfaPassword()"
+                          (input)="mfaPassword.set($any($event.target).value)"
+                          placeholder="Votre mot de passe"
+                          [disabled]="mfaLoading()"
+                        />
+                        <small class="form-hint">Entrez votre mot de passe pour confirmer votre identité</small>
+                      </div>
+
+                      <div class="mfa-actions">
+                        <button
+                          class="btn btn-primary"
+                          (click)="onReauthenticateAndSendCode()"
+                          [disabled]="mfaLoading() || !mfaPassword().trim()"
+                        >
+                          {{ mfaLoading() ? 'Vérification...' : 'Continuer' }}
+                        </button>
+                        <button class="btn btn-outline" (click)="onCancelMFA()" [disabled]="mfaLoading()">Annuler</button>
+                      </div>
+                    </div>
+                  } @else if (mfaStep() === 'verifying') {
+                    <div class="mfa-form">
+                      <div class="form-group">
+                        <label for="mfa-code">Code de vérification</label>
+                        <input
+                          type="text"
+                          id="mfa-code"
+                          [value]="mfaVerificationCode()"
+                          (input)="mfaVerificationCode.set($any($event.target).value)"
+                          placeholder="123456"
+                          maxlength="6"
+                          [disabled]="mfaLoading()"
+                        />
+                        <small class="form-hint">Entrez le code à 6 chiffres reçu par SMS</small>
+                      </div>
+
+                      <div class="mfa-actions">
+                        <button
+                          class="btn btn-primary"
+                          (click)="onVerifyMFA()"
+                          [disabled]="mfaLoading() || !mfaVerificationCode().trim()"
+                        >
+                          {{ mfaLoading() ? 'Vérification...' : 'Activer l’A2F' }}
+                        </button>
+                        <button class="btn btn-outline" (click)="onCancelMFA()" [disabled]="mfaLoading()">Annuler</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ONGLET DELETE ACCOUNT -->
+          @if (activeTab() === 'delete') {
+            <div class="alert alert-warning">
+              <div class="fw-semibold mb-2">Supprimer le compte</div>
+              <div class="text-secondary">
+                Cette action est irréversible. Votre compte et vos données seront supprimés.
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-danger">
+              Supprimer définitivement mon compte
+            </button>
+          }
+        </div>
       </div>
     </div>
-  </main>
+  </div>
 </div>
