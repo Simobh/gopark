@@ -1,1 +1,0 @@
-export type City = 'all' |'paris' | 'strasbourg' | 'toulouse';

@@ -32,11 +32,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'search',
-    loadComponent: () =>
-      import('./pages/parkings/parkings.component').then(m => m.ParkingsComponent),
-  },
-  {
     path: '**',
     redirectTo: 'home',
   },
