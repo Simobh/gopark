@@ -1,7 +1,7 @@
 export interface Parking {
   id?: string;
   name: string;
-  city: 'paris' | 'nantes' | 'strasbourg' | 'toulouse';
+  city: 'paris' | 'strasbourg' | 'toulouse';
   position: {
     lat: number;
     lon: number;
