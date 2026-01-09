@@ -1,6 +1,11 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { Location } from '@angular/common';
+
+const LS_AVATAR_KEY = 'gopark_avatar_preview';
+const LS_FIRSTNAME_KEY = 'gopark_first_name';
+const LS_LASTNAME_KEY = 'gopark_last_name';
 
 @Component({
   selector: 'app-settings',
@@ -10,17 +15,30 @@ import { AuthService } from '../../services/auth.service';
 })
 export class SettingsComponent {
   authService = inject(AuthService);
+  private location = inject(Location);
 
   error = signal('');
   success = signal('');
   loading = signal(false);
 
-  // ✅ UI
+  // UI
   activeTab = signal<'profile' | 'password' | 'verification' | 'delete'>('profile');
   editMode = signal(false);
 
-  // ✅ Avatar preview (upload local)
+  // Avatar + infos user
   avatarPreviewUrl = signal<string>('');
+  firstName = signal<string>('');
+  lastName = signal<string>('');
+
+  // ✅ MOT DE PASSE
+  currentPassword = signal('');
+  newPassword = signal('');
+  confirmPassword = signal('');
+  passwordLoading = signal(false);
+
+  showCurrentPassword = signal(false);
+  showNewPassword = signal(false);
+  showConfirmPassword = signal(false);
 
   // MFA
   mfaPhoneNumber = signal('');
@@ -31,12 +49,114 @@ export class SettingsComponent {
   mfaPassword = signal('');
 
   constructor() {
+    const savedAvatar = localStorage.getItem(LS_AVATAR_KEY);
+    if (savedAvatar) this.avatarPreviewUrl.set(savedAvatar);
+
+    const savedFirst = localStorage.getItem(LS_FIRSTNAME_KEY);
+    const savedLast = localStorage.getItem(LS_LASTNAME_KEY);
+    if (savedFirst) this.firstName.set(savedFirst);
+    if (savedLast) this.lastName.set(savedLast);
+
+    effect(() => {
+      const user = this.authService.currentUser?.();
+      if (!user) return;
+
+      if (this.firstName() || this.lastName()) return;
+
+      const dn = (user as any)?.displayName as string | undefined;
+      if (!dn) return;
+
+      const parts = dn.trim().split(/\s+/);
+      const first = parts[0] || '';
+      const last = parts.slice(1).join(' ') || '';
+
+      this.firstName.set(first);
+      this.lastName.set(last);
+
+      localStorage.setItem(LS_FIRSTNAME_KEY, first);
+      localStorage.setItem(LS_LASTNAME_KEY, last);
+    });
+
     effect(() => {
       if (this.mfaStep() === 'idle') {
         this.cleanupRecaptcha();
       }
     });
   }
+
+  // =========================
+  // ✅ MOT DE PASSE
+  // =========================
+
+  passwordStrength(): '' | 'Faible' | 'Moyen' | 'Fort' {
+  const p = this.newPassword().trim();
+
+  // ✅ Tant que l’utilisateur n’a rien tapé → RIEN
+  if (!p) return '';
+
+  const hasUpper = /[A-Z]/.test(p);
+  const hasLower = /[a-z]/.test(p);
+  const hasNumber = /[0-9]/.test(p);
+  const hasSpecial = /[^A-Za-z0-9]/.test(p);
+  const longEnough = p.length >= 8;
+
+  const score = [hasUpper, hasLower, hasNumber, hasSpecial, longEnough].filter(Boolean).length;
+
+  if (score <= 2) return 'Faible';
+  if (score <= 4) return 'Moyen';
+  return 'Fort';
+}
+
+  canSubmitPasswordForm() {
+    const cur = this.currentPassword().trim();
+    const n = this.newPassword().trim();
+    const c = this.confirmPassword().trim();
+
+    if (!cur || !n || !c) return false;
+    if (n.length < 8) return false;
+    if (n !== c) return false;
+
+    return true;
+  }
+
+  resetPasswordForm() {
+    this.currentPassword.set('');
+    this.newPassword.set('');
+    this.confirmPassword.set('');
+    this.showCurrentPassword.set(false);
+    this.showNewPassword.set(false);
+    this.showConfirmPassword.set(false);
+  }
+
+  async onChangePassword() {
+    this.error.set('');
+    this.success.set('');
+
+    if (!this.canSubmitPasswordForm()) {
+      this.error.set('Veuillez vérifier les champs du formulaire.');
+      return;
+    }
+
+    this.passwordLoading.set(true);
+
+    try {
+      await this.authService.changePassword(
+        this.currentPassword().trim(),
+        this.newPassword().trim()
+      );
+
+      this.success.set('Mot de passe mis à jour avec succès.');
+      this.resetPasswordForm();
+    } catch (e: any) {
+      this.error.set(e?.message || String(e) || 'Erreur lors de la mise à jour du mot de passe.');
+    } finally {
+      this.passwordLoading.set(false);
+    }
+  }
+
+  // =========================
+  // ✅ EMAIL VERIFICATION
+  // =========================
 
   async onResendVerification() {
     this.loading.set(true);
@@ -52,6 +172,10 @@ export class SettingsComponent {
       this.loading.set(false);
     }
   }
+
+  // =========================
+  // ✅ MFA
+  // =========================
 
   async onSendMFAVerificationCode() {
     const phoneNumber = this.mfaPhoneNumber().trim();
@@ -72,7 +196,8 @@ export class SettingsComponent {
 
     try {
       this.ensureRecaptchaContainer();
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const container = document.getElementById('recaptcha-container');
       if (!container) {
         throw new Error("Le conteneur reCAPTCHA n'a pas pu être créé. Veuillez rafraîchir la page.");
@@ -116,7 +241,7 @@ export class SettingsComponent {
 
     try {
       this.ensureRecaptchaContainer();
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const container = document.getElementById('recaptcha-container');
       if (!container) {
@@ -175,11 +300,7 @@ export class SettingsComponent {
   }
 
   async onDisableMFA() {
-    if (
-      !confirm(
-        "Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ? Votre compte sera moins sécurisé."
-      )
-    ) {
+    if (!confirm("Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ?")) {
       return;
     }
 
@@ -254,7 +375,6 @@ export class SettingsComponent {
     await this.authService.logout();
   }
 
-  // ✅ Upload local + preview
   onAvatarSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -268,12 +388,37 @@ export class SettingsComponent {
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.avatarPreviewUrl.set(reader.result as string);
+      const dataUrl = reader.result as string;
+
+      this.avatarPreviewUrl.set(dataUrl);
+      localStorage.setItem(LS_AVATAR_KEY, dataUrl);
+
+      this.success.set('Photo enregistrée.');
       this.error.set('');
     };
     reader.readAsDataURL(file);
 
-    // pour pouvoir re-choisir le même fichier
     input.value = '';
   }
+
+  passwordScore(): number {
+    const p = this.newPassword();
+    let score = 0;
+
+    if (p.length >= 8) score += 1;
+    if (/[A-Z]/.test(p)) score += 1;
+    if (/[a-z]/.test(p)) score += 1;
+    if (/[0-9]/.test(p)) score += 1;
+    if (/[^A-Za-z0-9]/.test(p)) score += 1;
+
+    return score; // 0 → 5
+  }
+
+  passwordProgress(): number {
+    return (this.passwordScore() / 5) * 100;
+  }
+
+    goBack() {
+      this.location.back();
+    }
 }
