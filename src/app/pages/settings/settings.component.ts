@@ -1,15 +1,12 @@
-
 import { Component, inject, signal, effect } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Navbar } from '../../components/navbar/navbar';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, RouterLink, Navbar],
+  imports: [FormsModule],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
 })
 export class SettingsComponent {
   authService = inject(AuthService);
@@ -18,6 +15,14 @@ export class SettingsComponent {
   success = signal('');
   loading = signal(false);
 
+  // ✅ UI
+  activeTab = signal<'profile' | 'password' | 'verification' | 'delete'>('profile');
+  editMode = signal(false);
+
+  // ✅ Avatar preview (upload local)
+  avatarPreviewUrl = signal<string>('');
+
+  // MFA
   mfaPhoneNumber = signal('');
   mfaVerificationCode = signal('');
   mfaVerificationId = signal('');
@@ -70,7 +75,7 @@ export class SettingsComponent {
       await new Promise(resolve => setTimeout(resolve, 300));
       const container = document.getElementById('recaptcha-container');
       if (!container) {
-        throw new Error('Le conteneur reCAPTCHA n\'a pas pu être créé. Veuillez rafraîchir la page.');
+        throw new Error("Le conteneur reCAPTCHA n'a pas pu être créé. Veuillez rafraîchir la page.");
       }
 
       const verificationId = await this.authService.sendMFAVerificationCode(phoneNumber);
@@ -78,7 +83,11 @@ export class SettingsComponent {
       this.mfaStep.set('verifying');
       this.success.set('Code SMS envoyé ! Vérifiez votre téléphone et entrez le code reçu.');
     } catch (error: any) {
-      if (error && (error.code === 'auth/requires-recent-login' || (typeof error === 'string' && error.includes('reconnexion récente')))) {
+      if (
+        error &&
+        (error.code === 'auth/requires-recent-login' ||
+          (typeof error === 'string' && error.includes('reconnexion récente')))
+      ) {
         this.mfaStep.set('needs-reauth');
         this.error.set('Une reconnexion récente est requise. Veuillez entrer votre mot de passe pour continuer.');
       } else {
@@ -111,9 +120,15 @@ export class SettingsComponent {
 
       const container = document.getElementById('recaptcha-container');
       if (!container) {
-        throw new Error('Le conteneur reCAPTCHA n\'a pas pu être créé. Veuillez rafraîchir la page.');
+        throw new Error("Le conteneur reCAPTCHA n'a pas pu être créé. Veuillez rafraîchir la page.");
       }
-      const verificationId = await this.authService.sendMFAVerificationCode(phoneNumber, 'recaptcha-container', password);
+
+      const verificationId = await this.authService.sendMFAVerificationCode(
+        phoneNumber,
+        'recaptcha-container',
+        password
+      );
+
       this.mfaVerificationId.set(verificationId);
       this.mfaStep.set('verifying');
       this.mfaPassword.set('');
@@ -160,7 +175,11 @@ export class SettingsComponent {
   }
 
   async onDisableMFA() {
-    if (!confirm('Êtes-vous sûr de vouloir désactiver l\'authentification à deux facteurs ? Votre compte sera moins sécurisé.')) {
+    if (
+      !confirm(
+        "Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ? Votre compte sera moins sécurisé."
+      )
+    ) {
       return;
     }
 
@@ -226,14 +245,35 @@ export class SettingsComponent {
         console.warn('Impossible de réinitialiser reCAPTCHA:', e);
       }
       setTimeout(() => {
-        if (container) {
-          container.innerHTML = '';
-        }
+        if (container) container.innerHTML = '';
       }, 100);
     }
   }
 
   async onLogout() {
     await this.authService.logout();
+  }
+
+  // ✅ Upload local + preview
+  onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.error.set('Veuillez sélectionner une image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.avatarPreviewUrl.set(reader.result as string);
+      this.error.set('');
+    };
+    reader.readAsDataURL(file);
+
+    // pour pouvoir re-choisir le même fichier
+    input.value = '';
   }
 }
