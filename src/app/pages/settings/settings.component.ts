@@ -14,6 +14,9 @@ export class SettingsComponent {
   error = signal('');
   success = signal('');
   loading = signal(false);
+  firstName = signal('');
+  lastName = signal('');
+  phoneNumber = signal('');
 
   // ✅ UI
   activeTab = signal<'profile' | 'password' | 'verification' | 'delete'>('profile');
@@ -36,6 +39,14 @@ export class SettingsComponent {
         this.cleanupRecaptcha();
       }
     });
+    const user = this.authService.currentUser();
+
+    if (user) {
+      const names = user.displayName?.split(' ') || [];
+      this.firstName.set(names[0] || '');
+      this.lastName.set(names.slice(1).join(' ') || '');
+      this.phoneNumber.set(user.phoneNumber || '');
+}
   }
 
   async onResendVerification() {
@@ -52,6 +63,26 @@ export class SettingsComponent {
       this.loading.set(false);
     }
   }
+    async onSaveProfile() {
+      this.loading.set(true);
+      this.error.set('');
+      this.success.set('');
+    
+      try {
+        await this.authService.updateProfile({
+          displayName: `${this.firstName()} ${this.lastName()}`,
+          phoneNumber: this.phoneNumber(),
+          photoURL: this.avatarPreviewUrl() || undefined,
+        });
+    
+        this.success.set('Profil mis à jour avec succès');
+        this.editMode.set(false);
+      } catch (e: any) {
+        this.error.set('Erreur lors de la mise à jour du profil');
+      } finally {
+        this.loading.set(false);
+      }
+    }
 
   async onSendMFAVerificationCode() {
     const phoneNumber = this.mfaPhoneNumber().trim();
@@ -255,25 +286,18 @@ export class SettingsComponent {
   }
 
   // ✅ Upload local + preview
-  onAvatarSelected(event: Event) {
+  async onAvatarSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-
     if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      this.error.set('Veuillez sélectionner une image.');
-      return;
+  
+    try {
+      const url = await this.authService.uploadAvatar(file);
+      this.avatarPreviewUrl.set(url);
+      this.success.set('Photo mise à jour');
+    } catch (e: any) {
+      this.error.set(e.message || 'Erreur upload');
     }
+  }  
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.avatarPreviewUrl.set(reader.result as string);
-      this.error.set('');
-    };
-    reader.readAsDataURL(file);
-
-    // pour pouvoir re-choisir le même fichier
-    input.value = '';
-  }
 }
