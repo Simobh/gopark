@@ -116,14 +116,16 @@
               </div>
             </div>
 
-            <button
-              type="button"
-              class="btn btn-outline-secondary d-flex align-items-center gap-2"
-              (click)="editMode.set(!editMode())"
-            >
-              <i class="bi bi-pencil"></i>
-              {{ editMode() ? 'Annuler' : 'Modifier' }}
-            </button>
+            @if (activeTab() !== 'verification') {
+              <button
+                type="button"
+                class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                (click)="editMode.set(!editMode())"
+              >
+                <i class="bi bi-pencil"></i>
+                {{ editMode() ? 'Annuler' : 'Modifier' }}
+              </button>
+            }            
           </div>
 
           <!-- ONGLET PROFIL -->
@@ -131,12 +133,24 @@
             <div class="row g-4">
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="Prénom" [disabled]="!editMode()" />
+                <input
+                  class="form-control"
+                  placeholder="Prénom"
+                  [value]="firstName()"
+                  (input)="firstName.set($any($event.target).value)"
+                  [disabled]="!editMode()"
+                />
               </div>
 
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="Nom" [disabled]="!editMode()" />
+                <input
+                class="form-control"
+                placeholder="Nom"
+                [value]="lastName()"
+                (input)="lastName.set($any($event.target).value)"
+                [disabled]="!editMode()"
+                />
               </div>
 
               <div class="col-12 col-md-6">
@@ -148,7 +162,13 @@
 
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Numéro de téléphone <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="+33612345678" [disabled]="!editMode()" />
+                <input
+                class="form-control"
+                placeholder="+33612345678"
+                [value]="mfaPhoneNumber()"
+                (input)="mfaPhoneNumber.set($any($event.target).value)"
+              />
+              
               </div>
 
               <!-- Statut vérification -->
@@ -175,9 +195,15 @@
               </div>
 
               <div class="col-12 d-flex justify-content-center mt-3">
-                <button type="button" class="btn btn-primary px-5 shadow" [disabled]="!editMode()">
-                  Enregistrer les modifications
-                </button>
+                <button
+                type="button"
+                class="btn btn-primary px-5 shadow"
+                [disabled]="!editMode()"
+                (click)="onSaveProfile()"
+              >
+                Enregistrer les modifications
+              </button>
+              
               </div>
             </div>
           }
@@ -210,7 +236,6 @@
                       <h3>Facteurs enregistrés:</h3>
                       @for (factor of authService.getMFAFactors(); track factor.uid) {
                         <div class="mfa-factor-item">
-                          <span class="factor-icon">📱</span>
                           <div class="factor-details">
                             <strong>{{ factor.displayName }}</strong>
                             @if (factor.phoneNumber) {
@@ -240,24 +265,23 @@
                       <div class="form-group">
                         <label for="mfa-phone">Numéro de téléphone</label>
                         <input
-                          type="tel"
-                          id="mfa-phone"
-                          [value]="mfaPhoneNumber()"
-                          (input)="mfaPhoneNumber.set($any($event.target).value)"
-                          placeholder="+33612345678"
-                          [disabled]="mfaLoading()"
-                        />
+                        class="form-control"
+                        placeholder="+33612345678"
+                        [value]="mfaPhoneNumber()"
+                        (input)="mfaPhoneNumber.set($any($event.target).value)"
+                      />
                         <small class="form-hint">Format international requis (ex: +33612345678)</small>
                       </div>
 
                       <button
-                        class="btn btn-primary"
-                        (click)="onSendMFAVerificationCode()"
-                        [disabled]="mfaLoading() || !mfaPhoneNumber().trim()"
-                        style="width: 100%;"
-                      >
-                        {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
-                      </button>
+                      class="btn btn-primary"
+                      (click)="onSendMFAVerificationCode()"
+                      [disabled]="mfaLoading() || !mfaPhoneNumber().trim()"
+                      style="width: 100%;"
+                    >
+                      {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
+                    </button>
+                    
                     </div>
                   } @else if (mfaStep() === 'sending') {
                     <div class="mfa-form">
