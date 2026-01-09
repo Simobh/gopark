@@ -111,6 +111,7 @@
                 </div>
               </div>
 
+            @if (activeTab() !== 'verification') {
               <button
                 type="button"
                 class="btn btn-outline-secondary d-flex align-items-center gap-2"
@@ -119,8 +120,8 @@
                 <i class="bi bi-pencil"></i>
                 {{ editMode() ? 'Annuler' : 'Modifier' }}
               </button>
-            </div>
-          }
+            }            
+          </div>
 
           <!-- ===================== -->
           <!-- ONGLET PROFIL -->
@@ -129,12 +130,24 @@
             <div class="row g-4">
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="Prénom" [value]="firstName()" disabled />
+                <input
+                  class="form-control"
+                  placeholder="Prénom"
+                  [value]="firstName()"
+                  (input)="firstName.set($any($event.target).value)"
+                  [disabled]="!editMode()"
+                />
               </div>
 
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="Nom" [value]="lastName()" disabled />
+                <input
+                class="form-control"
+                placeholder="Nom"
+                [value]="lastName()"
+                (input)="lastName.set($any($event.target).value)"
+                [disabled]="!editMode()"
+                />
               </div>
 
               <div class="col-12 col-md-6">
@@ -146,7 +159,13 @@
 
               <div class="col-12 col-md-6">
                 <label class="form-label fw-semibold">Numéro de téléphone <span class="text-danger">*</span></label>
-                <input class="form-control" placeholder="+33612345678" [disabled]="!editMode()" />
+                <input
+                class="form-control"
+                placeholder="+33612345678"
+                [value]="mfaPhoneNumber()"
+                (input)="mfaPhoneNumber.set($any($event.target).value)"
+              />
+              
               </div>
 
               <div class="col-12">
@@ -172,9 +191,15 @@
               </div>
 
               <div class="col-12 d-flex justify-content-center mt-3">
-                <button type="button" class="btn btn-primary px-5 shadow" [disabled]="!editMode()">
-                  Enregistrer les modifications
-                </button>
+                <button
+                type="button"
+                class="btn btn-primary px-5 shadow"
+                [disabled]="!editMode()"
+                (click)="onSaveProfile()"
+              >
+                Enregistrer les modifications
+              </button>
+              
               </div>
             </div>
           }
@@ -248,12 +273,23 @@
                   @if (newPassword().trim()) {
                     <div class="mt-2 d-flex align-items-center gap-3">
 
-                      <div class="progress flex-grow-1" style="height: 8px;">
-                        <div class="progress-bar"
-                             [style.width.%]="passwordProgress()"
-                             [class.bg-danger]="passwordStrength() === 'Faible'"
-                             [class.bg-warning]="passwordStrength() === 'Moyen'"
-                             [class.bg-success]="passwordStrength() === 'Fort'">
+              @if (authService.hasMFA()) {
+                <div class="mfa-info">
+                  <p class="info-text">
+                    L'authentification à deux facteurs est activée. Votre compte est protégé par une couche de sécurité supplémentaire.
+                  </p>
+
+                  @if (authService.getMFAFactors().length > 0) {
+                    <div class="mfa-factors">
+                      <h3>Facteurs enregistrés:</h3>
+                      @for (factor of authService.getMFAFactors(); track factor.uid) {
+                        <div class="mfa-factor-item">
+                          <div class="factor-details">
+                            <strong>{{ factor.displayName }}</strong>
+                            @if (factor.phoneNumber) {
+                              <span class="factor-phone">{{ factor.phoneNumber }}</span>
+                            }
+                          </div>
                         </div>
                       </div>
 
@@ -267,6 +303,27 @@
                     </div>
                   }
                 </div>
+              } @else {
+                <div class="mfa-setup">
+                  <p class="info-text">
+                    L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
+                    Vous recevrez un code SMS à chaque connexion.
+                  </p>
+
+                  @if (mfaStep() === 'idle') {
+                    <div class="mfa-form">
+                      <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Activer l'A2F</h3>
+
+                      <div class="form-group">
+                        <label for="mfa-phone">Numéro de téléphone</label>
+                        <input
+                        class="form-control"
+                        placeholder="+33612345678"
+                        [value]="mfaPhoneNumber()"
+                        (input)="mfaPhoneNumber.set($any($event.target).value)"
+                      />
+                        <small class="form-hint">Format international requis (ex: +33612345678)</small>
+                      </div>
 
                   <!-- Confirmation -->
                   <div class="mt-3">
@@ -289,6 +346,14 @@
                       >
                         <i class="bi" [class.bi-eye]="!showConfirmPassword()" [class.bi-eye-slash]="showConfirmPassword()"></i>
                       </button>
+                      class="btn btn-primary"
+                      (click)="onSendMFAVerificationCode()"
+                      [disabled]="mfaLoading() || !mfaPhoneNumber().trim()"
+                      style="width: 100%;"
+                    >
+                      {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
+                    </button>
+                    
                     </div>
 
                     @if (confirmPassword().trim() && confirmPassword().trim() !== newPassword().trim()) {

@@ -1,74 +1,113 @@
-
 <div class="auth-container">
   <div class="auth-card">
-    <h1>Inscription</h1>
-    
+
+    <h1 class="text-center mb-4">Inscription</h1>
+
     @if (error()) {
-      <div class="error-message">{{ error() }}</div>
+      <div class="alert alert-danger">{{ error() }}</div>
     }
-    
+
     @if (success()) {
-      <div class="success-message">{{ success() }}</div>
+      <div class="alert alert-success">{{ success() }}</div>
     }
-    
+
     <form (submit)="onRegister(); $event.preventDefault()">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input 
-          type="email" 
-          id="email" 
+
+      <div class="mb-3">
+        <label class="form-label">Prénom</label>
+        <input class="form-control" type="text"
+          [value]="firstName()"
+          (input)="firstName.set($any($event.target).value)">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Nom</label>
+        <input class="form-control" type="text"
+          [value]="lastName()"
+          (input)="lastName.set($any($event.target).value)">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Téléphone</label>
+        <input class="form-control" type="tel"
+          placeholder="+33612345678"
+          [value]="phoneNumber()"
+          (input)="phoneNumber.set($any($event.target).value)">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email"
           [value]="email()"
-          (input)="email.set($any($event.target).value)"
-          placeholder="votre@email.com"
-          required
-        />
+          (input)="email.set($any($event.target).value)">
+      </div>
+
+      <!-- 🔐 MOT DE PASSE -->
+      <div class="mb-2">
+        <label class="form-label">Mot de passe</label>
+        <input class="form-control" type="password"
+        [value]="password()"
+        (input)="password.set($any($event.target).value)">      
       </div>
       
-      <div class="form-group">
-        <label for="password">Mot de passe</label>
-        <input 
-          type="password" 
-          id="password" 
-          [value]="password()"
-          (input)="password.set($any($event.target).value)"
-          placeholder="••••••••"
-          required
-        />
-      </div>
+      @if (password().trim().length != 0) {
+
+        <ul class="list-unstyled small mb-2">
+          <li [class.text-success]="hasMinLength()" [class.text-danger]="!hasMinLength()">✔ 8 caractères minimum</li>
+          <li [class.text-success]="hasUpper()" [class.text-danger]="!hasUpper()">✔ 1 majuscule</li>
+          <li [class.text-success]="hasLower()" [class.text-danger]="!hasLower()">✔ 1 minuscule</li>
+          <li [class.text-success]="hasNumber()" [class.text-danger]="!hasNumber()">✔ 1 chiffre</li>
+          <li [class.text-success]="hasSpecial()" [class.text-danger]="!hasSpecial()">✔ 1 caractère spécial</li>
+        </ul>
       
-      <div class="form-group">
-        <label for="confirmPassword">Confirmer le mot de passe</label>
-        <input 
-          type="password" 
-          id="confirmPassword" 
+        <div class="progress mb-3" style="height:6px">
+          <div class="progress-bar"
+            [class.bg-danger]="passwordStrength() === 'weak'"
+            [class.bg-warning]="passwordStrength() === 'medium'"
+            [class.bg-success]="passwordStrength() === 'strong'"
+            [style.width]="passwordStrength() === 'weak' ? '33%' :
+                            passwordStrength() === 'medium' ? '66%' : '100%'">
+          </div>
+        </div>
+      
+      }
+      
+
+      <div class="mb-3">
+        <label class="form-label">Confirmer le mot de passe</label>
+        <input class="form-control" type="password"
           [value]="confirmPassword()"
-          (input)="confirmPassword.set($any($event.target).value)"
-          placeholder="••••••••"
-          required
-        />
+          (input)="confirmPassword.set($any($event.target).value)">
       </div>
-      
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        {{ loading() ? 'Inscription...' : "S'inscrire" }}
+
+      @if (!passwordsMatch()) {
+        <div class="text-danger small mb-2">
+           Les mots de passe ne correspondent pas
+        </div>
+      }
+
+      <button class="btn btn-dark w-100"
+        type="submit"
+        [disabled]="!canSubmit()">
+        S'inscrire
       </button>
     </form>
-    
-    <div class="divider">
-      <span>OU</span>
-    </div>
-    
-    <button type="button" class="btn btn-google" (click)="onGoogleRegister()" [disabled]="loading()">
-      <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
+
+    <div class="text-center my-3 text-muted">OU</div>
+
+    <!-- 🔵 GOOGLE -->
+    <button class="btn btn-outline-secondary w-100"
+      (click)="onGoogleRegister()"
+      [disabled]="loading()">
+      <img src="https://developers.google.com/identity/images/g-logo.png"
+           width="18" class="me-2">
       Continuer avec Google
     </button>
-    
-    <p class="auth-footer">
-      Déjà un compte ? <a routerLink="/login">Se connecter</a>
+
+    <p class="text-center mt-3">
+      Déjà un compte ?
+      <a routerLink="/login" class="fw-bold text-decoration-none">Se connecter</a>
     </p>
+
   </div>
 </div>

@@ -1,4 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 import {
   Auth,
   createUserWithEmailAndPassword,
@@ -16,9 +19,10 @@ import {
   EmailAuthProvider,
   updatePassword,
   type User,
-  type MultiFactorResolver
+  type MultiFactorResolver,
+  updateProfile
 } from '@angular/fire/auth';
-import { RecaptchaVerifier, getAuth } from 'firebase/auth';
+import { RecaptchaVerifier, getAuth, signInWithCredential } from 'firebase/auth';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -27,6 +31,7 @@ import { Router } from '@angular/router';
 export class AuthService {
   private auth = inject(Auth);
   private router = inject(Router);
+  private firestore = inject(Firestore);
 
   currentUser = signal<User | null>(null);
 
@@ -36,34 +41,55 @@ export class AuthService {
     });
   }
 
-  async registerWithEmail(email: string, password: string) {
-    try {
-      const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-
-      if (credential.user) {
-        try {
-          const actionCodeSettings = {
-            url: window.location.origin + '/home',
-            handleCodeInApp: false,
-          };
-
-          await sendEmailVerification(credential.user, actionCodeSettings);
-          console.log('Email de vérification envoyé avec succès');
-        } catch (emailError: any) {
-          console.error('Erreur lors de l\'envoi de l\'email de vérification:', emailError);
-          throw new Error(
-            'Erreur lors de l\'envoi de l\'email de vérification: ' + this.handleError(emailError)
-          );
-        }
-      }
-
-      this.router.navigate(['/home']);
-      return credential;
-    } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error);
-      throw this.handleError(error);
+  async registerWithEmail(
+    email: string,
+    password: string,
+    extra?: {
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
     }
+  ) {
+    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+    const user = credential.user;
+  
+    if (!user) throw new Error('Utilisateur non créé');
+  
+    // 🔹 Update Auth profile
+    await updateProfile(user, {
+      displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
+    });
+  
+    // 🔹 Firestore user document
+    await setDoc(doc(this.firestore, 'users', user.uid), {
+      uid: user.uid,
+      firstName: extra?.firstName ?? '',
+      lastName: extra?.lastName ?? '',
+      email: user.email,
+      phoneNumber: extra?.phoneNumber ?? '',
+      photoURL: user.photoURL ?? '',
+      createdAt: new Date()
+    });
+  
+    // 🔹 Email verification
+    await sendEmailVerification(user);
+  
+    this.router.navigate(['/home']);
   }
+  
+    updateProfile(data: {
+      displayName?: string;
+      phoneNumber?: string;
+      photoURL?: string;
+    }) {
+      const user = getAuth().currentUser;
+      if (!user) throw new Error('Not authenticated');
+    
+      return updateProfile(user, {
+        displayName: data.displayName,
+        photoURL: data.photoURL,
+      });
+    }
 
   async resetPassword(email: string) {
     try {
@@ -161,11 +187,30 @@ export class AuthService {
     };
   }
 
-  async sendMFAVerificationCode(
-    phoneNumber: string,
-    recaptchaContainerId: string = 'recaptcha-container',
-    password?: string
-  ): Promise<string> {
+  async uploadAvatar(file: File): Promise<string> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+  
+    const storage = getStorage();
+    const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
+  
+    await uploadBytes(avatarRef, file);
+    const photoURL = await getDownloadURL(avatarRef);
+  
+    // Update Auth
+    await updateProfile(user, { photoURL });
+  
+    // Update Firestore
+    await setDoc(
+      doc(this.firestore, 'users', user.uid),
+      { photoURL },
+      { merge: true }
+    );
+  
+    return photoURL;
+  }
+
+  async sendMFAVerificationCode(phoneNumber: string, recaptchaContainerId: string = 'recaptcha-container', password?: string): Promise<string> {
     try {
       const currentUser = this.auth.currentUser;
       if (!currentUser) throw new Error('Aucun utilisateur connecté');
