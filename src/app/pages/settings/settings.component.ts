@@ -49,27 +49,7 @@ export class SettingsComponent implements OnInit {
   showNewPassword = signal(false);
   showConfirmPassword = signal(false);
 
-  ngOnInit() {
-    this.activeTab.set('profile');
-    // Charger avatar et noms depuis localStorage (seulement côté navigateur)
-    if (typeof window !== 'undefined') {
-      const savedAvatar = localStorage.getItem(LS_AVATAR_KEY);
-      if (savedAvatar) this.avatarPreviewUrl.set(savedAvatar);
-
-      const savedFirst = localStorage.getItem(LS_FIRSTNAME_KEY);
-      const savedLast = localStorage.getItem(LS_LASTNAME_KEY);
-      if (savedFirst) this.firstName.set(savedFirst);
-      if (savedLast) this.lastName.set(savedLast);
-    }
-
-    const user = this.authService.currentUser();
-    if (user) {
-      const names = user.displayName?.split(' ') || [];
-      this.firstName.set(names[0] || '');
-      this.lastName.set(names.slice(1).join(' ') || '');
-      this.phoneNumber.set(user.phoneNumber || '');
-    }
-
+  constructor() {
     // Effet pour initialiser first/last name si non définis
     effect(() => {
       const user = this.authService.currentUser?.();
@@ -92,12 +72,57 @@ export class SettingsComponent implements OnInit {
       }
     });
 
+    // Effet pour charger les données Firestore quand l'utilisateur est connecté
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        this.authService.getUserDocument(user.uid).then((data: any) => {
+          if (data) {
+            if (data.phoneNumber) this.phoneNumber.set(data.phoneNumber);
+            // On met à jour les noms seulement s'ils sont vides pour ne pas écraser les changements en cours
+            if (data.firstName && !this.firstName()) this.firstName.set(data.firstName);
+            if (data.lastName && !this.lastName()) this.lastName.set(data.lastName);
+          }
+        });
+      }
+    });
+
     // Effet pour nettoyage reCAPTCHA
     effect(() => {
       if (this.mfaStep() === 'idle') {
         this.cleanupRecaptcha();
       }
     });
+  }
+
+  ngOnInit() {
+    this.activeTab.set('profile');
+    // Charger avatar et noms depuis localStorage (seulement côté navigateur)
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem(LS_AVATAR_KEY);
+      if (savedAvatar) this.avatarPreviewUrl.set(savedAvatar);
+
+      const savedFirst = localStorage.getItem(LS_FIRSTNAME_KEY);
+      const savedLast = localStorage.getItem(LS_LASTNAME_KEY);
+      if (savedFirst) this.firstName.set(savedFirst);
+      if (savedLast) this.lastName.set(savedLast);
+    }
+
+    const user = this.authService.currentUser();
+    if (user) {
+      const names = user.displayName?.split(' ') || [];
+      this.firstName.set(names[0] || '');
+      this.lastName.set(names.slice(1).join(' ') || '');
+      this.phoneNumber.set(user.phoneNumber || '');
+
+      this.authService.getUserDocument(user.uid).then((data: any) => {
+        if (data) {
+          if (data.phoneNumber) this.phoneNumber.set(data.phoneNumber);
+          if (data.firstName) this.firstName.set(data.firstName);
+          if (data.lastName) this.lastName.set(data.lastName);
+        }
+      });
+    }
   }
 
   // =========================
@@ -194,7 +219,8 @@ export class SettingsComponent implements OnInit {
         localStorage.setItem(LS_LASTNAME_KEY, this.lastName());
       }
     } catch (e: any) {
-      this.error.set('Erreur lors de la mise à jour du profil');
+      console.error(e);
+      this.error.set(e.message || String(e) || 'Erreur lors de la mise à jour du profil');
     } finally {
       this.loading.set(false);
     }

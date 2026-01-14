@@ -28,190 +28,207 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class AuthService {
-    private auth = inject(Auth);
-    private router = inject(Router);
-    private firestore = inject(Firestore);
+  private auth = inject(Auth);
+  private router = inject(Router);
+  private firestore = inject(Firestore);
 
-    currentUser = signal<User | null>(null);
+  currentUser = signal<User | null>(null);
 
-    constructor() {
-        user(this.auth).subscribe(currentUser => {
-        this.currentUser.set(currentUser);
-        });
-    }
-    async registerWithEmail(
-        email: string,
-        password: string,
-        extra?: {
-        firstName?: string;
-        lastName?: string;
-        phoneNumber?: string;
-        }
-    ) {
-        const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-        const user = credential.user;
-
-        if (!user) throw new Error('Utilisateur non créé');
-
-        // 🔹 Update Auth profile
-        await updateProfile(user, {
-            displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
-        });
-
-        // 🔹 Firestore user document
-        await setDoc(doc(this.firestore, 'users', user.uid), {
-            uid: user.uid,
-            firstName: extra?.firstName ?? '',
-            lastName: extra?.lastName ?? '',
-            email: user.email,
-            phoneNumber: extra?.phoneNumber ?? '',
-            photoURL: user.photoURL ?? '',
-            createdAt: new Date()
-        });
-
-        // 🔹 Email verification
-        await sendEmailVerification(user);
-
-        this.router.navigate(['/home']);
-    }
-
-    updateProfile(data: {
-      displayName?: string;
+  constructor() {
+    user(this.auth).subscribe(currentUser => {
+      this.currentUser.set(currentUser);
+    });
+  }
+  async registerWithEmail(
+    email: string,
+    password: string,
+    extra?: {
+      firstName?: string;
+      lastName?: string;
       phoneNumber?: string;
-      photoURL?: string;
-    }) {
-      const user = getAuth().currentUser;
-      if (!user) throw new Error('Not authenticated');
-
-      return updateProfile(user, {
-        displayName: data.displayName,
-        photoURL: data.photoURL,
-      });
     }
+  ) {
+    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+    const user = credential.user;
 
-    async resetPassword(email: string) {
-        try {
-        await sendPasswordResetEmail(this.auth, email);
-        } catch (error: any) {
-        throw this.handleError(error);
-        }
+    if (!user) throw new Error('Utilisateur non créé');
+
+    // 🔹 Update Auth profile
+    await updateProfile(user, {
+      displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
+    });
+
+    // 🔹 Firestore user document
+    await setDoc(doc(this.firestore, 'users', user.uid), {
+      uid: user.uid,
+      firstName: extra?.firstName ?? '',
+      lastName: extra?.lastName ?? '',
+      email: user.email,
+      phoneNumber: extra?.phoneNumber ?? '',
+      photoURL: user.photoURL ?? '',
+      createdAt: new Date()
+    });
+
+    // 🔹 Email verification
+    await sendEmailVerification(user);
+
+    this.router.navigate(['/home']);
+  }
+
+  async updateProfile(data: {
+    displayName?: string;
+    phoneNumber?: string;
+    photoURL?: string;
+  }) {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+
+    // 1. Mettre à jour le profil Auth (DisplayName, Photo)
+    await updateProfile(user, {
+      displayName: data.displayName,
+      photoURL: data.photoURL,
+    });
+
+    // 2. Mettre à jour le document Firestore (Téléphone, etc.)
+    const userRef = doc(this.firestore, 'users', user.uid);
+    await setDoc(userRef, {
+      firstName: data.displayName?.split(' ')[0] || '',
+      lastName: data.displayName?.split(' ').slice(1).join(' ') || '',
+      phoneNumber: data.phoneNumber || '',
+      photoURL: data.photoURL || null,
+      updatedAt: new Date()
+    }, { merge: true });
+  }
+
+  async getUserDocument(uid: string) {
+    const userRef = doc(this.firestore, 'users', uid);
+    const snap = await getDoc(userRef);
+    return snap.exists() ? snap.data() : null;
+  }
+
+  async resetPassword(email: string) {
+    try {
+      await sendPasswordResetEmail(this.auth, email);
+    } catch (error: any) {
+      throw this.handleError(error);
     }
+  }
 
-    async resendVerificationEmail() {
-        try {
-            const currentUser = this.auth.currentUser;
-        if (!currentUser) {
-            throw new Error('Aucun utilisateur connecté');
-        }
-
-        if (currentUser.emailVerified) {
-            throw new Error('L\'email est déjà vérifié');
-        }
-
-        // Configurer les paramètres d'action code pour l'email
-        const actionCodeSettings = {
-            url: window.location.origin + '/home',
-            handleCodeInApp: false,
-        };
-
-        await sendEmailVerification(currentUser, actionCodeSettings);
-            console.log('Email de vérification renvoyé avec succès');
-        } catch (error: any) {
-            console.error('Erreur lors du renvoi de l\'email de vérification:', error);
-        throw this.handleError(error);
-        }
-    }
-
-    isEmailVerified(): boolean {
-        return this.auth.currentUser?.emailVerified ?? false;
-    }
-
-    async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
-        try {
-        const currentUser = this.auth.currentUser;
-
-        if (!currentUser || !currentUser.email) {
-            throw new Error('Aucun utilisateur connecté');
-        }
-
-        const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-        await reauthenticateWithCredential(currentUser, credential);
-
-        await updatePassword(currentUser, newPassword);
-
-        return true;
-        } catch (error: any) {
-        console.error('Erreur lors du changement de mot de passe:', error);
-        throw this.handleError(error);
-        }
-    }
-
-    async ensureRecentLogin(password?: string): Promise<void> {
-        const currentUser = this.auth.currentUser;
-        if (!currentUser || !currentUser.email) {
+  async resendVerificationEmail() {
+    try {
+      const currentUser = this.auth.currentUser;
+      if (!currentUser) {
         throw new Error('Aucun utilisateur connecté');
-        }
+      }
 
-        // Vérifier le temps depuis la dernière authentification (5 minutes)
-        const lastSignInTime = currentUser.metadata.lastSignInTime;
-        if (lastSignInTime) {
-        const lastSignIn = new Date(lastSignInTime).getTime();
-        const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
+      if (currentUser.emailVerified) {
+        throw new Error('L\'email est déjà vérifié');
+      }
 
-        // Si la dernière connexion est récente (moins de 5 minutes), pas besoin de reauthentification
-        if (now - lastSignIn < fiveMinutes) {
-            return;
-        }
-        }
+      // Configurer les paramètres d'action code pour l'email
+      const actionCodeSettings = {
+        url: window.location.origin + '/home',
+        handleCodeInApp: false,
+      };
 
-        // Si un mot de passe est fourni, faire une reauthentification
-        if (password && currentUser.email) {
-        try {
-            const credential = EmailAuthProvider.credential(currentUser.email, password);
-            await reauthenticateWithCredential(currentUser, credential);
-            return;
-        } catch (error: any) {
-            if (error.code === 'auth/requires-recent-login' || error.code === 'auth/wrong-password') {
-            throw {
-                code: 'auth/requires-recent-login',
-                message: 'Mot de passe incorrect ou reconnexion requise. Veuillez vérifier votre mot de passe.'
-            };
-            }
-            throw error;
-        }
-        }
+      await sendEmailVerification(currentUser, actionCodeSettings);
+      console.log('Email de vérification renvoyé avec succès');
+    } catch (error: any) {
+      console.error('Erreur lors du renvoi de l\'email de vérification:', error);
+      throw this.handleError(error);
+    }
+  }
 
-        // Si pas de mot de passe, lancer l'erreur
-        throw {
-        code: 'auth/requires-recent-login',
-        message: 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter et vous reconnecter, puis réessayer.'
-        };
+  isEmailVerified(): boolean {
+    return this.auth.currentUser?.emailVerified ?? false;
+  }
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+    try {
+      const currentUser = this.auth.currentUser;
+
+      if (!currentUser || !currentUser.email) {
+        throw new Error('Aucun utilisateur connecté');
+      }
+
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+
+      await updatePassword(currentUser, newPassword);
+
+      return true;
+    } catch (error: any) {
+      console.error('Erreur lors du changement de mot de passe:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async ensureRecentLogin(password?: string): Promise<void> {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser || !currentUser.email) {
+      throw new Error('Aucun utilisateur connecté');
     }
 
-    async uploadAvatar(file: File): Promise<string> {
-        const user = this.auth.currentUser;
-        if (!user) throw new Error('Not authenticated');
+    // Vérifier le temps depuis la dernière authentification (5 minutes)
+    const lastSignInTime = currentUser.metadata.lastSignInTime;
+    if (lastSignInTime) {
+      const lastSignIn = new Date(lastSignInTime).getTime();
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
 
-        const storage = getStorage();
-        const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
-
-        await uploadBytes(avatarRef, file);
-        const photoURL = await getDownloadURL(avatarRef);
-
-        // Update Auth
-        await updateProfile(user, { photoURL });
-
-        // Update Firestore
-        await setDoc(
-        doc(this.firestore, 'users', user.uid),
-        { photoURL },
-        { merge: true }
-        );
-
-        return photoURL;
+      // Si la dernière connexion est récente (moins de 5 minutes), pas besoin de reauthentification
+      if (now - lastSignIn < fiveMinutes) {
+        return;
+      }
     }
+
+    // Si un mot de passe est fourni, faire une reauthentification
+    if (password && currentUser.email) {
+      try {
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(currentUser, credential);
+        return;
+      } catch (error: any) {
+        if (error.code === 'auth/requires-recent-login' || error.code === 'auth/wrong-password') {
+          throw {
+            code: 'auth/requires-recent-login',
+            message: 'Mot de passe incorrect ou reconnexion requise. Veuillez vérifier votre mot de passe.'
+          };
+        }
+        throw error;
+      }
+    }
+
+    // Si pas de mot de passe, lancer l'erreur
+    throw {
+      code: 'auth/requires-recent-login',
+      message: 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter et vous reconnecter, puis réessayer.'
+    };
+
+  }
+
+  async uploadAvatar(file: File): Promise<string> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+
+    const storage = getStorage();
+    const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
+
+    await uploadBytes(avatarRef, file);
+    const photoURL = await getDownloadURL(avatarRef);
+
+    // Update Auth
+    await updateProfile(user, { photoURL });
+
+    // Update Firestore
+    await setDoc(
+      doc(this.firestore, 'users', user.uid),
+      { photoURL },
+      { merge: true }
+    );
+
+    return photoURL;
+  }
 
   async sendMFAVerificationCode(phoneNumber: string, recaptchaContainerId: string = 'recaptcha-container', password?: string): Promise<string> {
     try {
@@ -626,9 +643,10 @@ export class AuthService {
     switch (errorCode) {
       case 'auth/invalid-credential':
       case 'auth/invalid-login-credentials':
-      case 'auth/wrong-password':
       case 'auth/user-not-found':
         return 'L’adresse email ou le mot de passe est incorrect.';
+      case 'auth/wrong-password':
+        return 'Le mot de passe actuel est incorrect.';
       case 'auth/email-already-in-use':
         return 'Cet email est déjà utilisé';
       case 'auth/invalid-email':

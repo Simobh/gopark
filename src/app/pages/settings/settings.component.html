@@ -114,8 +114,9 @@
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Téléphone *</label>
                 <input class="form-control"
-                       [value]="mfaPhoneNumber()"
-                       (input)="mfaPhoneNumber.set($any($event.target).value)" />
+                       [value]="phoneNumber()"
+                       (input)="phoneNumber.set($any($event.target).value)"
+                       [disabled]="!editMode()" />
               </div>
 
               <div class="col-12 text-center mt-3">
