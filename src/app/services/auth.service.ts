@@ -1,8 +1,6 @@
-
 import { Injectable, inject, signal } from '@angular/core';
 import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
 import {
   Auth,
   createUserWithEmailAndPassword,
@@ -14,6 +12,7 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   multiFactor,
+  updatePassword,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
   reauthenticateWithCredential,
@@ -29,54 +28,53 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class AuthService {
-  private auth = inject(Auth);
-  private router = inject(Router);
-  private firestore = inject(Firestore);
+    private auth = inject(Auth);
+    private router = inject(Router);
+    private firestore = inject(Firestore);
 
-  currentUser = signal<User | null>(null);
+    currentUser = signal<User | null>(null);
 
-  constructor() {
-    user(this.auth).subscribe(currentUser => {
-      this.currentUser.set(currentUser);
-    });
-  }
-
-  async registerWithEmail(
-    email: string,
-    password: string,
-    extra?: {
-      firstName?: string;
-      lastName?: string;
-      phoneNumber?: string;
+    constructor() {
+        user(this.auth).subscribe(currentUser => {
+        this.currentUser.set(currentUser);
+        });
     }
-  ) {
-    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-    const user = credential.user;
-  
-    if (!user) throw new Error('Utilisateur non créé');
-  
-    // 🔹 Update Auth profile
-    await updateProfile(user, {
-      displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
-    });
-  
-    // 🔹 Firestore user document
-    await setDoc(doc(this.firestore, 'users', user.uid), {
-      uid: user.uid,
-      firstName: extra?.firstName ?? '',
-      lastName: extra?.lastName ?? '',
-      email: user.email,
-      phoneNumber: extra?.phoneNumber ?? '',
-      photoURL: user.photoURL ?? '',
-      createdAt: new Date()
-    });
-  
-    // 🔹 Email verification
-    await sendEmailVerification(user);
-  
-    this.router.navigate(['/home']);
-  }
-  
+    async registerWithEmail(
+        email: string,
+        password: string,
+        extra?: {
+        firstName?: string;
+        lastName?: string;
+        phoneNumber?: string;
+        }
+    ) {
+        const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+        const user = credential.user;
+
+        if (!user) throw new Error('Utilisateur non créé');
+
+        // 🔹 Update Auth profile
+        await updateProfile(user, {
+            displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
+        });
+
+        // 🔹 Firestore user document
+        await setDoc(doc(this.firestore, 'users', user.uid), {
+            uid: user.uid,
+            firstName: extra?.firstName ?? '',
+            lastName: extra?.lastName ?? '',
+            email: user.email,
+            phoneNumber: extra?.phoneNumber ?? '',
+            photoURL: user.photoURL ?? '',
+            createdAt: new Date()
+        });
+
+        // 🔹 Email verification
+        await sendEmailVerification(user);
+
+        this.router.navigate(['/home']);
+    }
+
     updateProfile(data: {
       displayName?: string;
       phoneNumber?: string;
@@ -84,119 +82,136 @@ export class AuthService {
     }) {
       const user = getAuth().currentUser;
       if (!user) throw new Error('Not authenticated');
-    
+
       return updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
       });
     }
 
-  async resetPassword(email: string) {
-    try {
-      await sendPasswordResetEmail(this.auth, email);
-    } catch (error: any) {
-      throw this.handleError(error);
-    }
-  }
-
-  async resendVerificationEmail() {
-    try {
-      const currentUser = this.auth.currentUser;
-      if (!currentUser) {
-        throw new Error('Aucun utilisateur connecté');
-      }
-
-      if (currentUser.emailVerified) {
-        throw new Error('L\'email est déjà vérifié');
-      }
-
-      // Configurer les paramètres d'action code pour l'email
-      const actionCodeSettings = {
-        url: window.location.origin + '/home',
-        handleCodeInApp: false,
-      };
-
-      await sendEmailVerification(currentUser, actionCodeSettings);
-      console.log('Email de vérification renvoyé avec succès');
-    } catch (error: any) {
-      console.error('Erreur lors du renvoi de l\'email de vérification:', error);
-      throw this.handleError(error);
-    }
-  }
-
-  isEmailVerified(): boolean {
-    return this.auth.currentUser?.emailVerified ?? false;
-  }
-
-  /**
-   * Vérifie si l'utilisateur doit se reconnecter récemment
-   * @param password Mot de passe de l'utilisateur (optionnel, pour reauthentification)
-   */
-  async ensureRecentLogin(password?: string): Promise<void> {
-    const currentUser = this.auth.currentUser;
-    if (!currentUser || !currentUser.email) {
-      throw new Error('Aucun utilisateur connecté');
-    }
-
-    // Vérifier le temps depuis la dernière authentification (5 minutes)
-    const lastSignInTime = currentUser.metadata.lastSignInTime;
-    if (lastSignInTime) {
-      const lastSignIn = new Date(lastSignInTime).getTime();
-      const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-
-      // Si la dernière connexion est récente (moins de 5 minutes), pas besoin de reauthentification
-      if (now - lastSignIn < fiveMinutes) {
-        return;
-      }
-    }
-
-    // Si un mot de passe est fourni, faire une reauthentification
-    if (password && currentUser.email) {
-      try {
-        const credential = EmailAuthProvider.credential(currentUser.email, password);
-        await reauthenticateWithCredential(currentUser, credential);
-        return;
-      } catch (error: any) {
-        if (error.code === 'auth/requires-recent-login' || error.code === 'auth/wrong-password') {
-          throw {
-            code: 'auth/requires-recent-login',
-            message: 'Mot de passe incorrect ou reconnexion requise. Veuillez vérifier votre mot de passe.'
-          };
+    async resetPassword(email: string) {
+        try {
+        await sendPasswordResetEmail(this.auth, email);
+        } catch (error: any) {
+        throw this.handleError(error);
         }
-        throw error;
-      }
     }
 
-    // Si pas de mot de passe, lancer l'erreur
-    throw {
-      code: 'auth/requires-recent-login',
-      message: 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter et vous reconnecter, puis réessayer.'
-    };
-  }
+    async resendVerificationEmail() {
+        try {
+            const currentUser = this.auth.currentUser;
+        if (!currentUser) {
+            throw new Error('Aucun utilisateur connecté');
+        }
 
-  async uploadAvatar(file: File): Promise<string> {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('Not authenticated');
-  
-    const storage = getStorage();
-    const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
-  
-    await uploadBytes(avatarRef, file);
-    const photoURL = await getDownloadURL(avatarRef);
-  
-    // Update Auth
-    await updateProfile(user, { photoURL });
-  
-    // Update Firestore
-    await setDoc(
-      doc(this.firestore, 'users', user.uid),
-      { photoURL },
-      { merge: true }
-    );
-  
-    return photoURL;
-  }
+        if (currentUser.emailVerified) {
+            throw new Error('L\'email est déjà vérifié');
+        }
+
+        // Configurer les paramètres d'action code pour l'email
+        const actionCodeSettings = {
+            url: window.location.origin + '/home',
+            handleCodeInApp: false,
+        };
+
+        await sendEmailVerification(currentUser, actionCodeSettings);
+            console.log('Email de vérification renvoyé avec succès');
+        } catch (error: any) {
+            console.error('Erreur lors du renvoi de l\'email de vérification:', error);
+        throw this.handleError(error);
+        }
+    }
+
+    isEmailVerified(): boolean {
+        return this.auth.currentUser?.emailVerified ?? false;
+    }
+
+    async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+        try {
+        const currentUser = this.auth.currentUser;
+
+        if (!currentUser || !currentUser.email) {
+            throw new Error('Aucun utilisateur connecté');
+        }
+
+        const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+        await reauthenticateWithCredential(currentUser, credential);
+
+        await updatePassword(currentUser, newPassword);
+
+        return true;
+        } catch (error: any) {
+        console.error('Erreur lors du changement de mot de passe:', error);
+        throw this.handleError(error);
+        }
+    }
+
+    async ensureRecentLogin(password?: string): Promise<void> {
+        const currentUser = this.auth.currentUser;
+        if (!currentUser || !currentUser.email) {
+        throw new Error('Aucun utilisateur connecté');
+        }
+
+        // Vérifier le temps depuis la dernière authentification (5 minutes)
+        const lastSignInTime = currentUser.metadata.lastSignInTime;
+        if (lastSignInTime) {
+        const lastSignIn = new Date(lastSignInTime).getTime();
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+
+        // Si la dernière connexion est récente (moins de 5 minutes), pas besoin de reauthentification
+        if (now - lastSignIn < fiveMinutes) {
+            return;
+        }
+        }
+
+        // Si un mot de passe est fourni, faire une reauthentification
+        if (password && currentUser.email) {
+        try {
+            const credential = EmailAuthProvider.credential(currentUser.email, password);
+            await reauthenticateWithCredential(currentUser, credential);
+            return;
+        } catch (error: any) {
+            if (error.code === 'auth/requires-recent-login' || error.code === 'auth/wrong-password') {
+            throw {
+                code: 'auth/requires-recent-login',
+                message: 'Mot de passe incorrect ou reconnexion requise. Veuillez vérifier votre mot de passe.'
+            };
+            }
+            throw error;
+        }
+        }
+
+        // Si pas de mot de passe, lancer l'erreur
+        throw {
+        code: 'auth/requires-recent-login',
+        message: 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter et vous reconnecter, puis réessayer.'
+        };
+
+    }
+
+    async uploadAvatar(file: File): Promise<string> {
+        const user = this.auth.currentUser;
+        if (!user) throw new Error('Not authenticated');
+
+        const storage = getStorage();
+        const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
+
+        await uploadBytes(avatarRef, file);
+        const photoURL = await getDownloadURL(avatarRef);
+
+        // Update Auth
+        await updateProfile(user, { photoURL });
+
+        // Update Firestore
+        await setDoc(
+        doc(this.firestore, 'users', user.uid),
+        { photoURL },
+        { merge: true }
+        );
+
+        return photoURL;
+    }
 
   async sendMFAVerificationCode(phoneNumber: string, recaptchaContainerId: string = 'recaptcha-container', password?: string): Promise<string> {
     try {
@@ -609,16 +624,17 @@ export class AuthService {
 
     const errorCode = (error as any).code;
     switch (errorCode) {
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'L’adresse email ou le mot de passe est incorrect.';
       case 'auth/email-already-in-use':
         return 'Cet email est déjà utilisé';
       case 'auth/invalid-email':
         return 'Email invalide';
       case 'auth/weak-password':
         return 'Le mot de passe doit contenir au moins 6 caractères';
-      case 'auth/user-not-found':
-        return 'Utilisateur non trouvé';
-      case 'auth/wrong-password':
-        return 'Mot de passe incorrect';
       case 'auth/popup-closed-by-user':
         return 'Connexion annulée';
       case 'auth/too-many-requests':
@@ -654,23 +670,24 @@ export class AuthService {
       case 'auth/captcha-check-failed':
         return 'Échec de la vérification reCAPTCHA. Veuillez réessayer.';
       case 'auth/invalid-app-credential':
-        return 'Erreur de configuration reCAPTCHA Enterprise. Vérifiez que reCAPTCHA SMS defense est correctement configuré dans Firebase Console → Authentication → Paramètres → reCAPTCHA. Assurez-vous que les clés de site sont configurées pour la plateforme Web.';
+        return 'Erreur de configuration reCAPTCHA Enterprise. Vérifiez la configuration dans Firebase Console.';
       case 'auth/app-not-authorized':
         return 'Application non autorisée. Vérifiez la configuration Firebase.';
+      case 'auth/requires-recent-login':
+        return 'Une reconnexion récente est requise. Veuillez saisir votre mot de passe actuel pour confirmer.';
       case 'auth/internal-error':
-        // Vérifier si c'est lié à reCAPTCHA
         const internalErrorMsg = String((error as any).message || '').toLowerCase();
         if (internalErrorMsg.includes('recaptcha') || internalErrorMsg.includes('captcha') || internalErrorMsg.includes('securityerror') || internalErrorMsg.includes('browser_error')) {
           if (internalErrorMsg.includes('localhost') || internalErrorMsg.includes('domain')) {
-            return 'Le domaine localhost n\'est pas autorisé pour reCAPTCHA. Ajoutez "localhost" et "127.0.0.1" aux domaines autorisés dans Google Cloud Console → reCAPTCHA Enterprise → Votre clé de site.';
+            return 'Le domaine localhost n\'est pas autorisé pour reCAPTCHA. Ajoutez "localhost" et "127.0.0.1" aux domaines autorisés.';
           }
           if (internalErrorMsg.includes('securityerror') || internalErrorMsg.includes('blocked a frame')) {
-            return 'Erreur SecurityError reCAPTCHA. Le widget a été supprimé prématurément. Rafraîchissez la page et réessayez.';
+            return 'Erreur reCAPTCHA. Rafraîchissez la page et réessayez.';
           }
           if (internalErrorMsg.includes('browser_error')) {
-            return 'Erreur réseau reCAPTCHA (BROWSER_ERROR). Vérifiez votre connexion internet et réessayez.';
+            return 'Erreur réseau reCAPTCHA. Vérifiez votre connexion internet et réessayez.';
           }
-          return 'Erreur reCAPTCHA. Vérifiez que reCAPTCHA SMS defense est activé et correctement configuré dans Firebase Console.';
+          return 'Erreur reCAPTCHA. Vérifiez la configuration.';
         }
         return 'Erreur interne. Veuillez réessayer ou contacter le support.';
       case 'auth/operation-not-allowed':
@@ -678,11 +695,9 @@ export class AuthService {
         const errorMessage = (error as any).message || '';
         const errorString = String(errorMessage).toLowerCase();
         if (errorString.includes('region') || errorString.includes('région') || errorString.includes('sms unable to be sent') || errorString.includes('region enabled')) {
-          return 'La région SMS pour votre numéro de téléphone n\'est pas activée. Allez dans Firebase Console → Authentication → Paramètres → SMS → Règles pour les SMS par région → Activez la région de votre numéro (ex: France pour +33).';
+          return 'La région SMS pour votre numéro de téléphone n\'est pas activée. Activez la région correspondante dans Firebase Console.';
         }
-        return 'L\'authentification SMS/MFA n\'est pas activée. Vérifiez : 1) Authentication → Méthode de connexion → "Téléphone" activé, 2) Authentication → Paramètres → reCAPTCHA → "reCAPTCHA SMS defense" activé, 3) Authentication → Paramètres → SMS → Règles pour les SMS par région → Région activée.';
-      case 'auth/requires-recent-login':
-        return 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter, vous reconnecter, puis réessayer d\'activer l\'A2F.';
+        return 'L\'authentification SMS/MFA n\'est pas activée. Vérifiez la configuration Firebase.';
       default:
         return (error as any).message || errorCode || 'Une erreur est survenue';
     }
