@@ -26,7 +26,7 @@ export class ParkingMapperService {
         },
 
         address: address || undefined,
-        availablePlaces: undefined,
+        availablePlaces: r.plarel ?? undefined,
         totalCapacity: r.placal ?? undefined,
         status: r.placal > 0 ? 'OPEN' : 'UNKNOWN'
       };
@@ -46,7 +46,7 @@ export class ParkingMapperService {
         lat: r.position?.lat,
         lon: r.position?.lon
       },
-
+      address: r.idsurfs + ' ' + r.nom_parking + ' 67000 Strasbourg' || undefined,
       availablePlaces: r.libre,
       totalCapacity: r.total,
 

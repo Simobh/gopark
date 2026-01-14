@@ -12,7 +12,7 @@ import { Parking } from '../../models/parking.model';
 
 @Component({
   selector: 'app-map',
-  template: `<div id="map" style="width: 100%; height: 900px; border-radius: 8px;"></div>`,
+  template: `<div id="map" class="w-100 h-100"></div>`,
   standalone: true
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
@@ -41,7 +41,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
-
     this.mapboxgl = await import('mapbox-gl');
     
     this.map = new this.mapboxgl.Map({
@@ -49,66 +48,105 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [7.75, 48.57],
-      zoom: 12
+      zoom: 13,
+      pitch: 45,
+      bearing: -10
     });
 
     this.map.on('load', () => {
       this.isMapReady = true;
+      const layers = this.map.getStyle().layers;
+      const labelLayerId = layers.find(
+        (layer: any) => layer.type === 'symbol' && layer.layout['text-field']
+      ).id;
+
+      this.map.addLayer(
+        {
+          'id': 'add-3d-buildings',
+          'source': 'composite',
+          'source-layer': 'building',
+          'filter': ['==', 'extrude', 'true'],
+          'type': 'fill-extrusion',
+          'minzoom': 15,
+          'paint': {
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              15, 0,
+              15.05, ['get', 'height']
+            ],
+            'fill-extrusion-base': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              15, 0,
+              15.05, ['get', 'min_height']
+            ],
+            'fill-extrusion-opacity': 0.6
+          }
+        },
+        labelLayerId
+      );
+
       this.updateMap();
     });
   }
 
   private updateMap(shouldFlyToUser: boolean = false): void {
     if (!this.map) return;
-
     this.clearMarkers();
+    this.removeRoute(); 
+
     const bounds = new this.mapboxgl.LngLatBounds();
+
     if (this._userCoords) {
       const userMarker = new this.mapboxgl.Marker({ color: '#ff0000' })
         .setLngLat([this._userCoords.lon, this._userCoords.lat])
-        .setPopup(new this.mapboxgl.Popup().setHTML('<strong>Votre destination</strong>'))
+        .setPopup(new this.mapboxgl.Popup().setHTML('<strong>Votre départ</strong>'))
         .addTo(this.map);
       
       this.markers.push(userMarker);
       bounds.extend([this._userCoords.lon, this._userCoords.lat]);
 
       if (shouldFlyToUser) {
-        this.map.flyTo({
-          center: [this._userCoords.lon, this._userCoords.lat],
-          zoom: 15,
-          essential: true
+        this.map.flyTo({ 
+          center: [this._userCoords.lon, this._userCoords.lat], 
+          zoom: 16,
+          pitch: 60
         });
       }
     }
 
+
     this._parkings.forEach(p => {
       if (!p.position?.lat || !p.position?.lon) return;
 
-      const popupHtml = `
+      const popupNode = document.createElement('div');
+      popupNode.className = 'custom-popup';
+      popupNode.innerHTML = `
         <div class="p-1">
           <h6 class="fw-bold mb-1">${p.name}</h6>
-          <p class="text-muted small mb-2">Capacité : ${p.totalCapacity ?? 'N/A'}</p>
-          <div class="row">
-            <div class="col-6">
-              <button 
-                id="btn-parking-${p.id}" 
-                class="btn btn-primary btn-sm w-100 shadow-sm">
-                Détails
-              </button>
-            </div>
-            <div class="col-6">
-              <button 
-                id="btn-parking-${p.id}" 
-                class="btn btn-success btn-sm w-100 shadow-sm">
-                favoris
-              </button>
-            </div>
-          </div>
+          <p class="text-muted small mb-2">Adresse : ${p.address ?? 'N/A'}</p>
+          <p class="text-muted small mb-2">Ville : ${p.city ?? 'N/A'}</p>
+          <p class="text-muted small mb-2">Statut : ${p.status ?? 'N/A'}</p>
+          <p class="text-muted small mb-2">Places disponibles : ${p.totalCapacity ?? 'N/A'}</p>
+          <button class="btn btn-primary btn-sm w-100 shadow-sm btn-route">
+            <i class="bi bi-signpost-split-fill me-1"></i> Tracer l'itinéraire
+          </button>
         </div>
       `;
 
-      const popup = new this.mapboxgl.Popup({ offset: 25 }).setHTML(popupHtml);
+      popupNode.querySelector('.btn-route')?.addEventListener('click', () => {
+        if (this._userCoords) {
+          this.getRoute([this._userCoords.lon, this._userCoords.lat], [p.position.lon, p.position.lat]);
+        } else {
+          alert("Veuillez d'abord entrer votre adresse de départ.");
+        }
+      });
 
+      const popup = new this.mapboxgl.Popup({ offset: 25 }).setDOMContent(popupNode);
       const marker = new this.mapboxgl.Marker()
         .setLngLat([p.position.lon, p.position.lat])
         .setPopup(popup)
@@ -119,11 +157,53 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     });
 
     if (!shouldFlyToUser && !bounds.isEmpty()) {
-      this.map.fitBounds(bounds, { 
-        padding: 80, 
-        maxZoom: 15,
-        duration: 1500
-      });
+      this.map.fitBounds(bounds, { padding: 80, maxZoom: 15 });
+    }
+  }
+
+  // API Directions Mapbox pour le tracé
+  async getRoute(start: [number, number], end: [number, number]) {
+    try {
+      const query = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.mapboxToken}`,
+        { method: 'GET' }
+      );
+      const json = await query.json();
+      const data = json.routes[0];
+      const route = data.geometry.coordinates;
+
+      const geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: route }
+      };
+
+      if (this.map.getSource('route')) {
+        this.map.getSource('route').setData(geojson);
+      } else {
+        this.map.addLayer({
+          id: 'route',
+          type: 'line',
+          source: { type: 'geojson', data: geojson },
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': '#3887be', 'line-width': 5, 'line-opacity': 0.75 }
+        });
+      }
+
+      // Zoomer sur le trajet complet
+      const routeBounds = new this.mapboxgl.LngLatBounds();
+      route.forEach((coord: [number, number]) => routeBounds.extend(coord));
+      this.map.fitBounds(routeBounds, { padding: 60 });
+
+    } catch (error) {
+      console.error('Erreur lors du tracé du trajet:', error);
+    }
+  }
+
+  private removeRoute(): void {
+    if (this.map?.getLayer('route')) {
+      this.map.removeLayer('route');
+      this.map.removeSource('route');
     }
   }
 
