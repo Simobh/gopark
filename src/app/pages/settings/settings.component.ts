@@ -2,10 +2,13 @@ import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 const LS_AVATAR_KEY = 'gopark_avatar_preview';
 const LS_FIRSTNAME_KEY = 'gopark_first_name';
 const LS_LASTNAME_KEY = 'gopark_last_name';
+
+declare const bootstrap: any;
 
 @Component({
   selector: 'app-settings',
@@ -23,13 +26,18 @@ export class SettingsComponent implements OnInit {
   firstName = signal('');
   lastName = signal('');
   phoneNumber = signal('');
+  deletePassword = signal('');
+  deleteLoading = signal(false);
+
 
   // UI
   activeTab = signal<'profile' | 'password' | 'verification' | 'delete'>('profile');
   editMode = signal(false);
 
   // Avatar
-  avatarPreviewUrl = signal<string>('');
+  avatarPreviewUrl = signal<string | null>(null);
+  avatarError = signal<string | null>(null);
+  avatarSuccess = signal<string | null>(null);
 
   // MFA
   mfaPhoneNumber = signal('');
@@ -97,32 +105,20 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit() {
     this.activeTab.set('profile');
-    // Charger avatar et noms depuis localStorage (seulement côté navigateur)
-    if (typeof window !== 'undefined') {
-      const savedAvatar = localStorage.getItem(LS_AVATAR_KEY);
-      if (savedAvatar) this.avatarPreviewUrl.set(savedAvatar);
-
-      const savedFirst = localStorage.getItem(LS_FIRSTNAME_KEY);
-      const savedLast = localStorage.getItem(LS_LASTNAME_KEY);
-      if (savedFirst) this.firstName.set(savedFirst);
-      if (savedLast) this.lastName.set(savedLast);
-    }
 
     const user = this.authService.currentUser();
-    if (user) {
-      const names = user.displayName?.split(' ') || [];
-      this.firstName.set(names[0] || '');
-      this.lastName.set(names.slice(1).join(' ') || '');
-      this.phoneNumber.set(user.phoneNumber || '');
+    if (!user) return;
 
-      this.authService.getUserDocument(user.uid).then((data: any) => {
-        if (data) {
-          if (data.phoneNumber) this.phoneNumber.set(data.phoneNumber);
-          if (data.firstName) this.firstName.set(data.firstName);
-          if (data.lastName) this.lastName.set(data.lastName);
-        }
-      });
-    }
+    // 1) afficher vite si on a déjà une URL
+    const cached = localStorage.getItem(LS_AVATAR_KEY);
+    if (cached) this.avatarPreviewUrl.set(this.withCacheBuster(cached));
+
+    // 2) toujours recharger depuis Storage (source de vérité)
+    this.authService.getAvatarFromStorage(user.uid).then(url => {
+      if (!url) return;
+      this.avatarPreviewUrl.set(this.withCacheBuster(url));
+      localStorage.setItem(LS_AVATAR_KEY, url);
+    });
   }
 
   // =========================
@@ -205,24 +201,67 @@ export class SettingsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.success.set('');
+
     try {
       await this.authService.updateProfile({
         displayName: `${this.firstName()} ${this.lastName()}`,
         phoneNumber: this.phoneNumber(),
-        photoURL: this.avatarPreviewUrl() || undefined,
       });
+
       this.success.set('Profil mis à jour avec succès');
       this.editMode.set(false);
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(LS_FIRSTNAME_KEY, this.firstName());
-        localStorage.setItem(LS_LASTNAME_KEY, this.lastName());
-      }
     } catch (e: any) {
-      console.error(e);
-      this.error.set(e.message || String(e) || 'Erreur lors de la mise à jour du profil');
+      this.error.set(e.message || 'Erreur profil');
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private isBlobUrl(url: string) {
+    return url.startsWith('blob:');
+  }
+
+  private withCacheBuster(url: string) {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}t=${Date.now()}`;
+  }
+
+  private saveAvatarToLocalStorage(downloadUrl: string) {
+    // On stocke l’URL PROPRE (sans ?t=...), sinon tu empiles des query params
+    const clean = downloadUrl.split('?')[0];
+    localStorage.setItem(LS_AVATAR_KEY, clean);
+  }
+
+  private async loadAvatar() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+
+    // 1) localStorage (doit être un downloadURL, pas blob)
+    const cached = localStorage.getItem(LS_AVATAR_KEY);
+    if (cached && !this.isBlobUrl(cached)) {
+      this.avatarPreviewUrl.set(this.withCacheBuster(cached));
+      return;
+    } else if (cached && this.isBlobUrl(cached)) {
+      // nettoyage si jamais un blob s'est glissé
+      localStorage.removeItem(LS_AVATAR_KEY);
+    }
+
+    // 2) Firebase Auth photoURL
+    if (user.photoURL && !this.isBlobUrl(user.photoURL)) {
+      this.avatarPreviewUrl.set(this.withCacheBuster(user.photoURL));
+      this.saveAvatarToLocalStorage(user.photoURL);
+      return;
+    }
+
+    // 3) Firebase Storage (source de vérité)
+    try {
+      const url = await this.authService.getAvatarFromStorage(user.uid);
+      if (url) {
+        this.avatarPreviewUrl.set(this.withCacheBuster(url));
+        this.saveAvatarToLocalStorage(url);
+      }
+    } catch (e) {
+      console.error('Erreur loadAvatar:', e);
     }
   }
 
@@ -230,16 +269,28 @@ export class SettingsComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    try {
-      const url = await this.authService.uploadAvatar(file);
-      this.avatarPreviewUrl.set(url);
-      this.success.set('Photo mise à jour');
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(LS_AVATAR_KEY, url);
-      }
+    // ✅ preview immédiat (temporaire)
+    const localPreview = URL.createObjectURL(file);
+    this.avatarPreviewUrl.set(localPreview);
+
+    try {
+      // ✅ upload => renvoie un downloadURL Firebase Storage
+      const uploadedUrl = await this.authService.uploadAvatar(file);
+
+      // ✅ afficher + stocker (PERSISTANT)
+      this.avatarPreviewUrl.set(this.withCacheBuster(uploadedUrl));
+      this.saveAvatarToLocalStorage(uploadedUrl);
+
+      // IMPORTANT: libérer l'URL blob
+      URL.revokeObjectURL(localPreview);
+
+      this.avatarSuccess.set('Photo mise à jour avec succès');
+      this.avatarError.set(null);
     } catch (e: any) {
-      this.error.set(e.message || 'Erreur upload');
+      this.avatarError.set(e?.message || 'Erreur lors de l’upload');
+      this.avatarSuccess.set(null);
+      console.error(e);
     }
   }
 
@@ -372,6 +423,59 @@ export class SettingsComponent implements OnInit {
     if (typeof document === 'undefined') return;
     const container = document.getElementById('recaptcha-container');
     if (container) container.innerHTML = '';
+  }
+
+  openDeleteModal() {
+    const el = document.getElementById('deleteAccountModal');
+    if (!el || !bootstrap?.Modal) {
+      // fallback si bootstrap js pas chargé
+      const ok = confirm("Êtes-vous sûr de vouloir supprimer votre compte ?");
+      if (ok) this.onDeleteAccount();
+      return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static', keyboard: false });
+    modal.show();
+  }
+
+  closeDeleteModal() {
+    const el = document.getElementById('deleteAccountModal');
+    if (!el || !bootstrap?.Modal) return;
+    const modal = bootstrap.Modal.getInstance(el);
+    modal?.hide();
+  }
+
+  async confirmDeleteAccount() {
+    // ferme le modal Bootstrap si le JS est présent
+    this.closeDeleteModal();
+    await this.onDeleteAccount();
+  }
+
+  async onDeleteAccount() {
+    this.error.set('');
+    this.success.set('');
+
+    this.deleteLoading.set(true);
+
+    try {
+      await this.authService.deleteAccount(this.deletePassword().trim() || undefined);
+
+      // Nettoyage local (optionnel)
+      localStorage.removeItem('user_avatar');
+      localStorage.removeItem('gopark_avatar_preview');
+      localStorage.removeItem('gopark_first_name');
+      localStorage.removeItem('gopark_last_name');
+
+      this.success.set('Compte supprimé avec succès.');
+    } catch (e: any) {
+        console.error('DELETE ERROR:', e);
+        // e peut être une string (handleError retourne string)
+        const msg = typeof e === 'string' ? e : (e?.message || String(e));
+        this.error.set(msg || 'Erreur lors de la suppression du compte.');
+    } finally {
+      this.deleteLoading.set(false);
+      this.deletePassword.set('');
+    }
   }
 
   goBack() {

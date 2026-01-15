@@ -1,87 +1,99 @@
-<div class="container-fluid py-4 settings-page" style="max-width: 1200px;">
+<div class="setting-container">
+  <div class="container-fluid py-4 settings-page" style="max-width: 1200px;">
 
-  <!-- TOPBAR -->
-  <div class="settings-topbar mb-4">
-    <img src="assets/images/logo.png" alt="GoPark" class="topbar-logo" />
-  </div>
-
-  @if (error()) {
-    <div class="alert alert-danger" role="alert">{{ error() }}</div>
-  }
-
-  @if (success()) {
-    <div class="alert alert-success" role="alert">{{ success() }}</div>
-  }
-
-  <div class="row g-4">
-
-    <!-- SIDEBAR -->
-    <div class="col-12 col-lg-3 settings-sidebar">
-      <div class="card border-0 shadow-sm">
-        <div class="list-group list-group-flush rounded-3">
-
-          <button class="list-group-item list-group-item-action d-flex gap-2"
-                  [class.active]="activeTab() === 'profile'"
-                  (click)="activeTab.set('profile')">
-            <i class="bi bi-person"></i> Profil
-          </button>
-
-          <button class="list-group-item list-group-item-action d-flex gap-2"
-                  [class.active]="activeTab() === 'password'"
-                  (click)="activeTab.set('password')">
-            <i class="bi bi-lock"></i> Mot de passe
-          </button>
-
-          <button class="list-group-item list-group-item-action d-flex gap-2"
-                  [class.active]="activeTab() === 'verification'"
-                  (click)="activeTab.set('verification')">
-            <i class="bi bi-patch-check"></i> Vérification
-          </button>
-
-          <button class="list-group-item list-group-item-action d-flex gap-2 text-danger"
-                  [class.active]="activeTab() === 'delete'"
-                  (click)="activeTab.set('delete')">
-            <i class="bi bi-trash"></i> Supprimer le compte
-          </button>
-
-        </div>
-      </div>
+    <!-- TOPBAR -->
+    <div class="settings-topbar mb-4">
+      <img src="assets/images/logo.png" alt="GoPark" class="topbar-logo" />
     </div>
 
-    <!-- MAIN -->
-    <div class="col-12 col-lg-9">
-
-      <div class="main-header mb-4">
-        <button class="btn btn-link p-0" (click)="goBack()">
-          <i class="bi bi-arrow-left me-2"></i> Retour à l'accueil
-        </button>
-        <h2 class="mt-3 fw-semibold">Paramètres du compte</h2>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <div>
+          <h2 class="text-black fw-semibold mb-0">Paramètres</h2>
+        </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-4 p-lg-5">
+      <button class="btn btn-primary btn-sm px-3" (click)="goBack()">
+        <i class="bi bi-arrow-left me-2"></i> Retour à l'accueil
+      </button>
+    </div>
 
-          <!-- ================= PROFIL ================= -->
-          @if (activeTab() === 'profile') {
+    @if (error()) {
+    <div class="alert alert-danger" role="alert">{{ error() }}</div>
+    }
 
-            <div class="d-flex justify-content-between align-items-start mb-4">
-              <div class="position-relative">
-                <img [src]="avatarPreviewUrl() || 'assets/images/logo.png'"
-                     class="rounded-circle"
-                     style="width:120px;height:120px;object-fit:cover;" />
+    @if (success()) {
+    <div class="alert alert-success" role="alert">{{ success() }}</div>
+    }
+    <div class="row g-4">
 
-                <button class="btn btn-primary rounded-circle position-absolute bottom-0 end-0"
-                        style="width:40px;height:40px;"
-                        (click)="fileInput.click()">
-                  <i class="bi bi-camera-fill"></i>
-                </button>
+      <!-- SIDEBAR -->
+      <div class="col-12 col-lg-3 d-flex">
+        <div class="card border shadow-lg h-100 w-100">
+          <div class="list-group list-group-flush rounded-3">
 
-                <input #fileInput type="file" class="d-none"
-                       (change)="onAvatarSelected($event)" />
+            <button class="list-group-item list-group-item-action d-flex gap-2" [class.active]="activeTab() === 'profile'"
+              (click)="activeTab.set('profile')">
+              <i class="bi bi-person"></i> Profil
+            </button>
+
+            <button class="list-group-item list-group-item-action d-flex gap-2"
+              [class.active]="activeTab() === 'password'" (click)="activeTab.set('password')">
+              <i class="bi bi-lock"></i> Mot de passe
+            </button>
+
+            <button class="list-group-item list-group-item-action d-flex gap-2"
+              [class.active]="activeTab() === 'verification'" (click)="activeTab.set('verification')">
+              <i class="bi bi-patch-check"></i> Vérification
+            </button>
+
+            <button class="list-group-item list-group-item-action d-flex gap-2 text-danger"
+              [class.active]="activeTab() === 'delete'" (click)="activeTab.set('delete')">
+              <i class="bi bi-trash"></i> Supprimer le compte
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="col-12 col-lg-9">
+        <div class="card border shadow-lg">
+          <div class="card-body p-4 p-lg-5">
+
+            <!-- ================= PROFIL ================= -->
+            @if (activeTab() === 'profile') {
+
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+
+              <div class="d-flex align-items-center gap-4">
+                <div class="position-relative d-inline-block">
+
+                  <!-- Image avatar -->
+                  <div [hidden]="activeTab() !== 'profile'">
+
+                    <img [src]="avatarPreviewUrl() ? avatarPreviewUrl() : 'assets/images/unknown.jpg'" alt="Photo de profil"
+                      class="rounded-circle border" width="120" height="120" />
+                  </div>
+
+                  <!-- Bouton caméra -->
+                  <button type="button"
+                    class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center shadow"
+                    style="width: 38px; height: 38px;" (click)="fileInput.click()" [disabled]="!editMode()">
+                    <i class="bi bi-camera-fill"></i>
+                  </button>
+
+                  <!-- Input file caché -->
+                  <input #fileInput type="file" accept="image/*" class="d-none" (change)="onAvatarSelected($event)" />
+                </div>
+
+                <div>
+                  <h5 class="mb-1">{{ firstName() }} {{ lastName() }}</h5>
+                </div>
               </div>
-
-              <button class="btn btn-outline-secondary"
-                      (click)="editMode.set(!editMode())">
+              <!-- Bouton modifier -->
+              <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-2"
+                (click)="editMode.set(!editMode())">
                 <i class="bi bi-pencil"></i>
                 {{ editMode() ? 'Annuler' : 'Modifier' }}
               </button>
@@ -90,47 +102,61 @@
             <div class="row g-4">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Prénom *</label>
-                <input class="form-control"
-                       [value]="firstName()"
-                       (input)="firstName.set($any($event.target).value)"
-                       [disabled]="!editMode()" />
+                <input class="form-control" [value]="firstName()" (input)="firstName.set($any($event.target).value)"
+                  [disabled]="!editMode()" />
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Nom *</label>
-                <input class="form-control"
-                       [value]="lastName()"
-                       (input)="lastName.set($any($event.target).value)"
-                       [disabled]="!editMode()" />
+                <input class="form-control" [value]="lastName()" (input)="lastName.set($any($event.target).value)"
+                  [disabled]="!editMode()" />
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Email</label>
                 @if (authService.currentUser(); as user) {
-                  <input class="form-control" [value]="user.email" disabled />
+                <input class="form-control" [value]="user.email" disabled />
                 }
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Téléphone *</label>
-                <input class="form-control"
-                       [value]="phoneNumber()"
-                       (input)="phoneNumber.set($any($event.target).value)"
-                       [disabled]="!editMode()" />
+                <input class="form-control" [value]="phoneNumber()" (input)="phoneNumber.set($any($event.target).value)"
+                  [disabled]="!editMode()" />
+              </div>
+              <!-- Statut vérification -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">Statut de vérification</label>
+
+                @if (authService.currentUser(); as user) {
+                  <div class="border rounded-3 p-3 d-flex align-items-center justify-content-between">
+                    <span
+                      class="badge rounded-pill"
+                      [class.text-bg-success]="user.emailVerified"
+                      [class.text-bg-danger]="!user.emailVerified"
+                    >
+                      {{ user.emailVerified ? '✓ Vérifié' : '✗ Non vérifié' }}
+                    </span>
+
+                    @if (!user.emailVerified) {
+                      <button class="btn btn-outline-secondary" (click)="onResendVerification()" [disabled]="loading()">
+                        {{ loading() ? 'Envoi...' : 'Renvoyer l’email' }}
+                      </button>
+                    }
+                  </div>
+                }
               </div>
 
               <div class="col-12 text-center mt-3">
-                <button class="btn btn-primary px-5"
-                        [disabled]="!editMode()"
-                        (click)="onSaveProfile()">
+                <button class="btn btn-primary px-5" [disabled]="!editMode()" (click)="onSaveProfile()">
                   Enregistrer
                 </button>
               </div>
             </div>
-          }
+            }
 
-          <!-- ================= PASSWORD ================= -->
-          @if (activeTab() === 'password') {
+            <!-- ================= PASSWORD ================= -->
+            @if (activeTab() === 'password') {
             <div class="password-wrap">
               <h4 class="fw-semibold mb-1">Modifier le mot de passe</h4>
               <p class="text-secondary mb-4">
@@ -145,22 +171,12 @@
                     <label class="form-label fw-semibold">Mot de passe actuel</label>
                     <div class="input-group">
                       <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
-                      <input
-                        class="form-control"
-                        [type]="showCurrentPassword() ? 'text' : 'password'"
-                        placeholder="Saisissez votre mot de passe actuel"
-                        [value]="currentPassword()"
-                        (input)="currentPassword.set($any($event.target).value)"
-                        [disabled]="passwordLoading()"
-                      />
-                      <button
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        (click)="showCurrentPassword.set(!showCurrentPassword())"
-                        [disabled]="passwordLoading()"
-                      >
-                        <i class="bi"
-                          [class.bi-eye]="!showCurrentPassword()"
+                      <input class="form-control" [type]="showCurrentPassword() ? 'text' : 'password'"
+                        placeholder="Saisissez votre mot de passe actuel" [value]="currentPassword()"
+                        (input)="currentPassword.set($any($event.target).value)" [disabled]="passwordLoading()" />
+                      <button class="btn btn-outline-secondary" type="button"
+                        (click)="showCurrentPassword.set(!showCurrentPassword())" [disabled]="passwordLoading()">
+                        <i class="bi" [class.bi-eye]="!showCurrentPassword()"
                           [class.bi-eye-slash]="showCurrentPassword()"></i>
                       </button>
                     </div>
@@ -172,20 +188,13 @@
                     <div class="input-group">
                       <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
 
-                      <input
-                        class="form-control"
-                        [type]="showNewPassword() ? 'text' : 'password'"
-                        placeholder="Saisissez un nouveau mot de passe"
-                        [value]="newPassword()"
-                        (input)="newPassword.set($any($event.target).value)"
-                      />
+                      <input class="form-control" [type]="showNewPassword() ? 'text' : 'password'"
+                        placeholder="Saisissez un nouveau mot de passe" [value]="newPassword()"
+                        (input)="newPassword.set($any($event.target).value)" />
 
-                      <button class="btn btn-outline-secondary"
-                              type="button"
-                              (click)="showNewPassword.set(!showNewPassword())">
-                        <i class="bi"
-                          [class.bi-eye]="!showNewPassword()"
-                          [class.bi-eye-slash]="showNewPassword()"></i>
+                      <button class="btn btn-outline-secondary" type="button"
+                        (click)="showNewPassword.set(!showNewPassword())">
+                        <i class="bi" [class.bi-eye]="!showNewPassword()" [class.bi-eye-slash]="showNewPassword()"></i>
                       </button>
                     </div>
 
@@ -194,23 +203,21 @@
                     </small>
 
                     @if (newPassword().trim()) {
-                      <div class="mt-2 d-flex align-items-center gap-3">
-                        <div class="progress flex-grow-1" style="height: 8px;">
-                          <div class="progress-bar"
-                              [style.width.%]="passwordProgress()"
-                              [class.bg-danger]="passwordStrength() === 'Faible'"
-                              [class.bg-warning]="passwordStrength() === 'Moyen'"
-                              [class.bg-success]="passwordStrength() === 'Fort'">
-                          </div>
+                    <div class="mt-2 d-flex align-items-center gap-3">
+                      <div class="progress flex-grow-1" style="height: 8px;">
+                        <div class="progress-bar" [style.width.%]="passwordProgress()"
+                          [class.bg-danger]="passwordStrength() === 'Faible'"
+                          [class.bg-warning]="passwordStrength() === 'Moyen'"
+                          [class.bg-success]="passwordStrength() === 'Fort'">
                         </div>
-
-                        <span class="badge"
-                              [class.text-bg-danger]="passwordStrength() === 'Faible'"
-                              [class.text-bg-warning]="passwordStrength() === 'Moyen'"
-                              [class.text-bg-success]="passwordStrength() === 'Fort'">
-                          {{ passwordStrength() }}
-                        </span>
                       </div>
+
+                      <span class="badge" [class.text-bg-danger]="passwordStrength() === 'Faible'"
+                        [class.text-bg-warning]="passwordStrength() === 'Moyen'"
+                        [class.text-bg-success]="passwordStrength() === 'Fort'">
+                        {{ passwordStrength() }}
+                      </span>
+                    </div>
                     }
 
                     <!-- Confirmation -->
@@ -218,45 +225,35 @@
                       <label class="form-label fw-semibold">Confirmer le nouveau mot de passe</label>
                       <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-check2-circle"></i></span>
-                        <input
-                          class="form-control"
-                          [type]="showConfirmPassword() ? 'text' : 'password'"
-                          placeholder="Confirmez le nouveau mot de passe"
-                          [value]="confirmPassword()"
-                          (input)="confirmPassword.set($any($event.target).value)"
-                          [disabled]="passwordLoading()"
-                        />
-                        <button class="btn btn-outline-secondary"
-                                type="button"
-                                (click)="showConfirmPassword.set(!showConfirmPassword())"
-                                [disabled]="passwordLoading()">
-                          <i class="bi"
-                            [class.bi-eye]="!showConfirmPassword()"
+                        <input class="form-control" [type]="showConfirmPassword() ? 'text' : 'password'"
+                          placeholder="Confirmez le nouveau mot de passe" [value]="confirmPassword()"
+                          (input)="confirmPassword.set($any($event.target).value)" [disabled]="passwordLoading()" />
+                        <button class="btn btn-outline-secondary" type="button"
+                          (click)="showConfirmPassword.set(!showConfirmPassword())" [disabled]="passwordLoading()">
+                          <i class="bi" [class.bi-eye]="!showConfirmPassword()"
                             [class.bi-eye-slash]="showConfirmPassword()"></i>
                         </button>
                       </div>
 
                       @if (confirmPassword().trim() && confirmPassword().trim() !== newPassword().trim()) {
-                        <small class="text-danger d-block mt-2">
-                          Les mots de passe ne correspondent pas.
-                        </small>
+                      <small class="text-danger d-block mt-2">
+                        Les mots de passe ne correspondent pas.
+                      </small>
                       }
                     </div>
 
                     <!-- Actions -->
                     <div class="d-flex gap-2 mt-4">
-                      <button class="btn btn-primary flex-grow-1"
-                              (click)="onChangePassword()"
-                              [disabled]="passwordLoading() || !canSubmitPasswordForm()">
+                      <button class="btn btn-primary flex-grow-1" (click)="onChangePassword()"
+                        [disabled]="passwordLoading() || !canSubmitPasswordForm()">
                         @if (passwordLoading()) {
-                          <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span class="spinner-border spinner-border-sm me-2"></span>
                         }
                         Enregistrer le nouveau mot de passe
                       </button>
 
-                      <button class="btn btn-outline-secondary"
-                              (click)="resetPasswordForm()"
-                              [disabled]="passwordLoading()">
+                      <button class="btn btn-outline-secondary" (click)="resetPasswordForm()"
+                        [disabled]="passwordLoading()">
                         Annuler
                       </button>
                     </div>
@@ -265,9 +262,9 @@
                 </div>
               </div>
             </div>
-          }
-          <!-- ================= VERIFICATION ================= -->
-          @if (activeTab() === 'verification') {
+            }
+            <!-- ================= VERIFICATION ================= -->
+            @if (activeTab() === 'verification') {
             <section class="settings-section mfa-section">
               <div class="section-header">
                 <h2>Authentification à deux facteurs (A2F)</h2>
@@ -277,80 +274,142 @@
               </div>
 
               @if (authService.hasMFA()) {
-                <div class="mfa-info">
-                  <p class="info-text">
-                    L'authentification à deux facteurs est activée.
-                  </p>
+              <div class="mfa-info">
+                <p class="info-text">
+                  L'authentification à deux facteurs est activée. Votre compte est désormais protégé par une couche de sécurité supplémentaire.
+                </p>
 
-                  @if (authService.getMFAFactors().length > 0) {
-                    <div class="mfa-factors">
-                      <h3>Facteurs enregistrés :</h3>
-                      @for (factor of authService.getMFAFactors(); track factor.uid) {
-                        <div class="mfa-factor-item">
-                          <strong>{{ factor.displayName }}</strong>
-                          @if (factor.phoneNumber) {
-                            <span>{{ factor.phoneNumber }}</span>
-                          }
-                        </div>
-                      }
-                    </div>
+                @if (authService.getMFAFactors().length > 0) {
+                <div class="mfa-factors">
+                  <h3>Facteurs enregistrés :</h3>
+                  @for (factor of authService.getMFAFactors(); track factor.uid) {
+                  <div class="mfa-factor-item">
+                    <strong>{{ factor.displayName }}</strong>
+                    @if (factor.phoneNumber) {
+                    <span>{{ factor.phoneNumber }}</span>
+                    }
+                  </div>
                   }
-
-                  <button class="btn btn-danger"
-                          (click)="onDisableMFA()"
-                          [disabled]="mfaLoading()">
-                    {{ mfaLoading() ? 'Désactivation...' : 'Désactiver l’A2F' }}
-                  </button>
                 </div>
+                }
+
+                <button class="btn btn-danger" (click)="onDisableMFA()" [disabled]="mfaLoading()">
+                  {{ mfaLoading() ? 'Désactivation...' : 'Désactiver l’A2F' }}
+                </button>
+              </div>
               } @else {
 
+                <p class="info-text">
+                  L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
+                </p>
                 <div class="mfa-setup">
 
-                  @if (mfaStep() === 'idle') {
-                    <div class="mfa-form">
-                      <label>Numéro de téléphone</label>
-                      <input class="form-control"
-                            [value]="mfaPhoneNumber()"
-                            (input)="mfaPhoneNumber.set($any($event.target).value)" />
+                @if (mfaStep() === 'idle') {
+                <div class="mfa-form">
+                  <h3 style="margin-top: 0; margin-bottom: 20px; color: #333;">Activer l'A2F</h3>
+                  <label>Numéro de téléphone</label>
+                  <input class="form-control" [value]="mfaPhoneNumber()"
+                    (input)="mfaPhoneNumber.set($any($event.target).value)" />
+                  <small class="form-hint">Format international requis (ex: +33612345678)</small>
 
-                      <button class="btn btn-primary w-100 mt-3"
-                              (click)="onSendMFAVerificationCode()"
-                              [disabled]="mfaLoading() || !mfaPhoneNumber().trim()">
-                        {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
-                      </button>
-                    </div>
-                  }
-
-                  @else if (mfaStep() === 'verifying') {
-                    <div class="mfa-form">
-                      <label>Code de vérification</label>
-                      <input class="form-control"
-                            [value]="mfaVerificationCode()"
-                            (input)="mfaVerificationCode.set($any($event.target).value)" />
-
-                      <button class="btn btn-primary mt-3"
-                              (click)="onVerifyMFA()"
-                              [disabled]="mfaLoading()">
-                        Vérifier
-                      </button>
-                    </div>
-                  }
-
+                  <button class="btn btn-primary w-100 mt-3" (click)="onSendMFAVerificationCode()"
+                    [disabled]="mfaLoading() || !mfaPhoneNumber().trim()">
+                    {{ mfaLoading() ? 'Envoi...' : 'Envoyer le code SMS' }}
+                  </button>
                 </div>
+                }
+
+                @else if (mfaStep() === 'verifying') {
+                <div class="mfa-form">
+                  <label>Code de vérification</label>
+                  <input class="form-control" [value]="mfaVerificationCode()"
+                    (input)="mfaVerificationCode.set($any($event.target).value)" />
+
+                  <button class="btn btn-primary mt-3" (click)="onVerifyMFA()" [disabled]="mfaLoading()">
+                    Vérifier
+                  </button>
+                </div>
+                }
+
+              </div>
               }
             </section>
-          }
-          <!-- ================= DELETE ================= -->
-          @if (activeTab() === 'delete') {
-            <div class="alert alert-warning">
-              <strong>Supprimer le compte</strong><br />
-              Cette action est irréversible. Toutes vos données seront supprimées.
-            </div>
+            }
+            <!-- ================= DELETE ================= -->
+            @if (activeTab() === 'delete') {
+            <div class="password-wrap">
+              <div class="alert alert-warning">
+                <strong>Supprimer le compte</strong><br />
+                Cette action est irréversible. Toutes vos données seront supprimées.
+              </div>
 
-            <button class="btn btn-danger">
-              Supprimer définitivement mon compte
-            </button>
-          }
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="openDeleteModal()"
+                [disabled]="deleteLoading()"
+              >
+                @if (deleteLoading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Supprimer définitivement mon compte
+              </button>
+              <div
+                class="modal fade"
+                id="deleteAccountModal"
+                tabindex="-1"
+                aria-labelledby="deleteAccountModalLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="deleteAccountModalLabel">
+                        Confirmer la suppression
+                      </h5>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        [disabled]="deleteLoading()"
+                      ></button>
+                    </div>
+
+                    <div class="modal-body">
+                      <p class="mb-2">
+                        Cette action est <strong>définitive</strong>.
+                      </p>
+                      <p class="text-secondary mb-0">
+                        Voulez-vous vraiment supprimer votre compte ?
+                      </p>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                        [disabled]="deleteLoading()"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-danger"
+                        (click)="confirmDeleteAccount()"
+                        [disabled]="deleteLoading()"
+                      >
+                        Oui, supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
         </div>
       </div>
     </div>

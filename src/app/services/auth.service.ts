@@ -1,6 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { deleteUser } from 'firebase/auth';
+import { deleteDoc } from '@angular/fire/firestore';
+import { deleteObject } from 'firebase/storage';
 import {
   Auth,
   createUserWithEmailAndPassword,
@@ -207,25 +210,45 @@ export class AuthService {
 
   }
 
+  async getAvatarFromStorage(uid: string): Promise<string | null> {
+    try {
+      const storage = getStorage();
+      const avatarRef = ref(storage, `users/${uid}/avatar.jpg`);
+      return await getDownloadURL(avatarRef);
+    } catch (e) {
+      console.warn('Avatar introuvable dans Storage:', e);
+      return null;
+    }
+  }
+
   async uploadAvatar(file: File): Promise<string> {
     const user = this.auth.currentUser;
     if (!user) throw new Error('Not authenticated');
 
+    console.log('📤 Upload avatar for:', user.uid);
+
     const storage = getStorage();
     const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
 
+    // 1️⃣ Upload
     await uploadBytes(avatarRef, file);
+    console.log('✅ Upload OK');
+
+    // 2️⃣ URL Firebase
     const photoURL = await getDownloadURL(avatarRef);
+    console.log('🌍 URL Firebase:', photoURL);
 
-    // Update Auth
+    // 3️⃣ Auth
     await updateProfile(user, { photoURL });
+    console.log('✅ Auth profile updated');
 
-    // Update Firestore
+    // 4️⃣ Firestore
     await setDoc(
       doc(this.firestore, 'users', user.uid),
       { photoURL },
       { merge: true }
     );
+    console.log('✅ Firestore updated');
 
     return photoURL;
   }
@@ -718,6 +741,46 @@ export class AuthService {
         return 'L\'authentification SMS/MFA n\'est pas activée. Vérifiez la configuration Firebase.';
       default:
         return (error as any).message || errorCode || 'Une erreur est survenue';
+    }
+  }
+  
+  async deleteAccount(password?: string) {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) throw new Error('Aucun utilisateur connecté');
+
+    try {
+      // Reauth email/password si fourni
+      if (password && currentUser.email) {
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(currentUser, credential);
+      }
+
+      // Supprimer avatar storage (si existe)
+      try {
+        const storage = getStorage();
+        const avatarRef = ref(storage, `users/${currentUser.uid}/avatar.jpg`);
+        await deleteObject(avatarRef);
+      } catch {}
+
+      // Supprimer Firestore doc
+      try {
+        await deleteDoc(doc(this.firestore, 'users', currentUser.uid));
+      } catch {}
+
+      // Supprimer Auth account
+      await deleteUser(currentUser);
+
+      // Redirection
+      await this.router.navigate(['/login']);
+    } catch (err: any) {
+      console.error('deleteAccount error:', err);
+
+      if (err?.code === 'auth/requires-recent-login') {
+        throw 'Une reconnexion récente est requise. Saisis ton mot de passe puis réessaie.';
+      }
+
+      // handleError retourne une string => parfait pour affichage
+      throw this.handleError(err);
     }
   }
 }
