@@ -23,44 +23,40 @@
           </li>
         </ul>
         @if (authService.currentUser(); as user) {
-            <div class="dropdown ms-3">
-              <button
-                class="btn btn-outline-dark dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-                PROFIL
-              </button>
 
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" routerLink="/favorites">
-                     Mes favoris
-                  </a>
-                </li>
-                <li>
-                  <a class="dropdown-item" routerLink="/history">
-                     Historique
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <a class="dropdown-item" routerLink="/settings">
-                     Paramètres
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <button class="dropdown-item text-danger" (click)="onLogout()">
-                     Déconnexion
-                  </button>
-                </li>
-              </ul>
-            </div>
+          @if (user.email === 'gopark.management@gmail.com') {
+            <a
+              routerLink="/admin/notifications"
+              class="btn btn-outline-dark ms-3 position-relative"
+              title="Notifications"
+            >
+              🔔
+              @if (unreadCount$ | async; as count) {
+                @if (count > 0) {
+                  <span
+                    class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+                  >
+                    {{ count }}
+                  </span>
+                }
+              }
+            </a>
           }
-           @else {
-          <a routerLink="/login" class="btn btn-outline-dark ms-3">SE CONNECTER</a>
+
+          <a routerLink="/settings" class="btn btn-outline-dark ms-3">
+            PARAMÈTRES
+          </a>
+
+          <button class="btn btn-outline-dark ms-3" (click)="onLogout()">
+            DÉCONNEXION
+          </button>
+
+        } @else {
+          <a routerLink="/login" class="btn btn-outline-dark ms-3">
+            SE CONNECTER
+          </a>
         }
+
       </div>
     </div>
   </nav>

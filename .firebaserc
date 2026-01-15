@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "gopark-5aaa3"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
