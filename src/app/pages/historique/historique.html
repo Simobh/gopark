@@ -1,0 +1,113 @@
+<!-- BACKGROUND GLOBAL -->
+<div
+  class="container-fluid historique-bg"
+>
+
+  <!-- BLOC PRINCIPAL -->
+  <div class="container historique-wrapper">
+
+    <!-- HEADER -->
+    <div class="historique-header">
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+        <!-- TITRE -->
+        <div>
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="historique-icon">
+              <mat-icon>history</mat-icon>
+            </div>
+            <h2 class="fw-bold mb-0">Historique</h2>
+          </div>
+
+          <p class="text-muted mb-0">
+            Les parkings que vous avez consultés récemment.
+          </p>
+        </div>
+
+        <!-- ACTION GLOBALE -->
+        <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2">
+          <mat-icon>delete</mat-icon>
+          Vider
+        </button>
+
+      </div>
+
+      <hr class="my-4">
+    </div>
+
+    <!-- GROUPE : AUJOURD'HUI -->
+    <div class="historique-section">
+      <h6 class="section-title">AUJOURD’HUI</h6>
+
+      <!-- CARTE -->
+      <div class="historique-card">
+
+        <div class="row align-items-center g-4">
+
+          <!-- IMAGE -->
+          <div class="col-12 col-md-3 border-end">
+            <div class="position-relative">
+              <img
+                src="/assets/images/recherche_parking.png"
+                class="historique-img"
+              />
+              <span class="badge bg-dark position-absolute top-0 start-0 m-2">
+                Vu récemment
+              </span>
+            </div>
+          </div>
+
+          <!-- INFOS -->
+          <div class="col-12 col-md-6 ps-md-4">
+
+            <!-- TITRE -->
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h5 class="fw-bold mb-0">Parking Opéra</h5>
+              <span class="badge bg-success-subtle text-success">
+                Historique
+              </span>
+            </div>
+
+            <!-- ADRESSE -->
+            <div class="info-row">
+              <mat-icon>place</mat-icon>
+              <span>2 Rue de l’Opéra, Paris</span>
+            </div>
+
+            <!-- DATE -->
+            <div class="info-row info-date">
+              <mat-icon>schedule</mat-icon>
+              <span>Consulté le 18 janvier 2026 à 14:32</span>
+            </div>
+
+            <!-- NOTE -->
+            <div class="info-row mt-2">
+              <span class="text-warning">★★★★★</span>
+              <strong>5.4</strong>
+              <span class="text-muted">(54 avis)</span>
+            </div>
+
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="col-12 col-md-3 text-md-end">
+
+            <button class="btn btn-primary btn-sm w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
+              <mat-icon>visibility</mat-icon>
+              Voir
+            </button>
+
+            <button class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+              <mat-icon>delete</mat-icon>
+              Supprimer
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

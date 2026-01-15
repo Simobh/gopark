@@ -1,66 +1,95 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
-    <div class="container">
-      <a class="navbar-brand" href="#">
-        <img src="/assets/images/logo.png" alt="GoPark" class="navbar-logo">
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <img src="/assets/images/logo.png" alt="GoPark" class="navbar-logo">
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav align-items-center">
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('home')" (click)="scrollToHome()" >Accueil</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('about')" (click)="scrollToAbout()">À Propos</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('services')" (click)="scrollToServices()">Services</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('how')" (click)="scrollToHow()">Comment Ça Marche</a>
-          </li>
-        </ul>
-        @if (authService.currentUser(); as user) {
-            <div class="dropdown ms-3">
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav align-items-center">
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            [class.active]="isActive('home')"
+            (click)="scrollToHome()">
+            Accueil
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            [class.active]="isActive('about')"
+            (click)="scrollToAbout()">
+            À Propos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            [class.active]="isActive('services')"
+            (click)="scrollToServices()">
+            Services
+          </a>
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            [class.active]="isActive('how')"
+            (click)="scrollToHow()">
+            Comment Ça Marche
+          </a>
+        </li>
+      </ul>
+
+      @if (authService.currentUser(); as user) {
+        <div class="dropdown ms-3">
+          <button
+            class="btn btn-outline-dark dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            PROFIL
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" routerLink="/favorites">
+                Mes favoris
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" routerLink="/historique">
+                Historique
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" routerLink="/settings">
+                Paramètres
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
               <button
-                class="btn btn-outline-dark dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-                PROFIL
+                class="dropdown-item text-danger"
+                (click)="onLogout()">
+                Déconnexion
               </button>
-
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a class="dropdown-item" routerLink="/favorites">
-                     Mes favoris
-                  </a>
-                </li>
-                <li>
-                  <a class="dropdown-item" routerLink="/history">
-                     Historique
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <a class="dropdown-item" routerLink="/settings">
-                     Paramètres
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <button class="dropdown-item text-danger" (click)="onLogout()">
-                     Déconnexion
-                  </button>
-                </li>
-              </ul>
-            </div>
-          }
-           @else {
-          <a routerLink="/login" class="btn btn-outline-dark ms-3">SE CONNECTER</a>
-        }
-      </div>
+            </li>
+          </ul>
+        </div>
+      }
+      @else {
+        <a routerLink="/login" class="btn btn-outline-dark ms-3">
+          SE CONNECTER
+        </a>
+      }
     </div>
-  </nav>
+  </div>
+</nav>

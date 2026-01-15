@@ -5,36 +5,49 @@ export const routes: Routes = [
   {
     path: 'home',
     loadComponent: () =>
-      import('./pages/landing-page/landing-page').then(m => m.LandingPageComponent),
+      import('./pages/landing-page/landing-page')
+        .then(m => m.LandingPageComponent),
   },
   {
     path: 'login',
     loadComponent: () =>
-      import('./pages/login/login.component').then(m => m.LoginComponent),
+      import('./pages/login/login.component')
+        .then(m => m.LoginComponent),
     canActivate: [publicGuard],
   },
   {
     path: 'register',
     loadComponent: () =>
-      import('./pages/register/register.component').then(m => m.RegisterComponent),
+      import('./pages/register/register.component')
+        .then(m => m.RegisterComponent),
     canActivate: [publicGuard],
   },
   {
     path: 'forgot-password',
     loadComponent: () =>
-      import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+      import('./pages/forgot-password/forgot-password.component')
+        .then(m => m.ForgotPasswordComponent),
     canActivate: [publicGuard],
   },
   {
     path: 'settings',
     loadComponent: () =>
-      import('./pages/settings/settings.component').then(m => m.SettingsComponent),
+      import('./pages/settings/settings.component')
+        .then(m => m.SettingsComponent),
     canActivate: [authGuard],
   },
   {
     path: 'search',
     loadComponent: () =>
-      import('./pages/parkings/parkings.component').then(m => m.ParkingsComponent),
+      import('./pages/parkings/parkings.component')
+        .then(m => m.ParkingsComponent),
+  },
+  {
+    path: 'historique',
+    loadComponent: () =>
+      import('./pages/historique/historique')
+        .then(m => m.HistoriqueComponent),
+    canActivate: [authGuard],
   },
   {
     path: '**',
