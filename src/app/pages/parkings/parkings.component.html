@@ -1,7 +1,7 @@
 <div class="container-fluid p-0 vh-100 position-relative overflow-hidden">
   
   <div class="position-absolute top-0 start-50 translate-middle-x mt-2 mt-md-1 px-md-0 col-12 col-md-9" style="z-index: 1050;">
-    <div class="card shadow border-0 mx-1 mx-md-0">
+    <div class="card shadow border-0 mx-1 mx-md-0 bg-white">
       <div class="card-body p-1">
         <div class="row g-2 align-items-center">
           <div class="col-3 col-md-1">
@@ -26,29 +26,39 @@
     </div>
   </div>
 
-  <div class="position-absolute bottom-0 bottom-md-auto top-md-0 end-0 mt-md-5 me-md-4 w-100 w-md-25 h-25 h-md-75 py-md-5 d-md-none d-block" 
-       style="z-index: 1000;">
-    <div class="card shadow-lg border-0 h-100 bg-white bg-opacity-75" style="backdrop-filter: blur(8px); border-radius: 15px 15px 0 0;">
+  <div class="position-absolute bottom-0 bottom-md-auto top-md-0 end-0 mt-md-5 me-md-4 w-100 w-md-25 h-25 h-md-75 py-md-5 d-md-none d-block" style="z-index: 1000;">
+    <div class="card shadow-lg border-0 h-100 bg-white bg-opacity-25" style="backdrop-filter: blur(8px); border-radius: 15px 15px 0 0;">
       <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center py-2 px-3 border-0">
-        <span class="small text-uppercase">Parkings</span>
-        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }}</span>
+         <span>Parkings</span>
+        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }} </span>
       </div>
-      <div class="card-body overflow-auto p-2">
+      <div class="card-body overflow-auto p-2 bg-white bg-opacity-25">
         <ng-container *ngIf="parkings$ | async as parkingsList">
-          <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm">
+          <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm border-start border-primary border-5">
             <div class="card-body p-2">
-              <div class="d-flex justify-content-between align-items-start">
-                <h6 class="mb-1 fw-bold text-dark small text-truncate" style="max-width: 70%;">{{ p.name }}</h6>
-                <span class="badge bg-light text-dark border" style="font-size: 0.6rem;">{{ p.status }}</span>
+              <div class="d-flex justify-content-between align-items-center p-1">
+                <div>
+                  <h6 class="m-0 fw-bold text-dark">{{ p.name }}</h6>
+                  <h6 class="m-0 fw-bold text-dark small text-muted">{{ p.city }}</h6>
+                </div>
+                <div>
+                  <button class="btn btn-sm fw-bold fs-4" (click)="toggleFavorite(p)">
+                    <i class="bi" [ngClass]="isFavorite(p.id) ? 'bi-star-fill text-warning' : 'bi-star'"></i>
+                  </button>
+                </div>
               </div>
-              <p class="text-muted mb-2" style="font-size: 0.7rem; line-height: 1.1;">
-                <i class="bi bi-geo-alt-fill text-danger"></i> {{ p.address }}
-              </p>
               <div class="d-flex justify-content-between align-items-center">
-                <span class="badge p-1 px-2" style="font-size: 0.65rem;" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
-                  Places : {{ p.availablePlaces ?? 'N/A' }}
-                </span>
-                <button class="btn btn-primary btn-sm px-3 py-1 fw-bold" style="font-size: 0.7rem;">Voir</button>
+                <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-primary"></i> {{ p.address }}</p>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-arrow-right-circle"></i></button>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="d-flex">
+                  <span class="badge p-2 me-1" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
+                    Places : {{ p.availablePlaces ?? 'N/A' }}
+                  </span>
+                  <span class="badge p-2" [ngClass]="p.status == 'OPEN' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
+                </div>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
               </div>
             </div>
           </div>
@@ -57,29 +67,39 @@
     </div>
   </div>
 
-    <div class="position-absolute top-2 end-0 mt-4 me-4 h-100 w-25 py-5 d-none d-md-block" style="z-index: 1000;">
-    <div class="card shadow border-0 h-100 bg-white bg-opacity-75" style="backdrop-filter: blur(5px);">
+  <div class="position-absolute top-2 end-0 mt-4 me-4 h-100 w-25 py-5 d-none d-md-block" style="z-index: 1000;">
+    <div class="card shadow border-0 h-100 bg-white bg-opacity-25" style="backdrop-filter: blur(5px);">
       <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
-        <span>Parkings disponibles</span>
-        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }}</span>
+        <span>Parkings</span>
+        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }} </span>
       </div>
-      <div class="card-body overflow-auto p-2">
+      <div class="card-body overflow-auto p-2 bg-white bg-opacity-25">
         <ng-container *ngIf="parkings$ | async as parkingsList">
-          <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm">
+          <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm border-start border-primary border-5">
             <div class="card-body p-2">
-              <h6 class="mb-1 fw-bold text-dark">{{ p.name }}</h6>
-              <h6 class="mb-1 fw-bold text-dark">{{ p.city }}</h6>
-              <p class="text-muted small mb-1">
-                <i class="bi bi-geo-alt-fill text-danger"></i> {{ p.address }}
-              </p>
+              <div class="d-flex justify-content-between align-items-center p-1">
+                <div>
+                  <h6 class="m-0 fw-bold text-dark">{{ p.name }}</h6>
+                  <h6 class="m-0 fw-bold text-dark small text-muted">{{ p.city }}</h6>
+                </div>
+                <div>
+                  <button class="btn btn-sm fw-bold fs-4" (click)="toggleFavorite(p)">
+                    <i class="bi" [ngClass]="isFavorite(p.id) ? 'bi-star-fill text-warning' : 'bi-star'"></i>
+                  </button>
+                </div>
+              </div>
               <div class="d-flex justify-content-between align-items-center">
-                <span class="badge" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
-                  Places disponibles : {{ p.availablePlaces ?? 'N/A' }}
-                </span>
-                <span class="badge" [ngClass]="p.status == 'OPEN' ? 'bg-success' : 'bg-danger'">
-                  {{ p.status }}
-                </span>
-                <button class="btn btn-outline-primary btn-sm px-2 py-0">Voir</button>
+                <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-primary"></i> {{ p.address }}</p>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-arrow-right-circle"></i></button>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="d-flex">
+                  <span class="badge p-2 me-1" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
+                    Places : {{ p.availablePlaces ?? 'N/A' }}
+                  </span>
+                  <span class="badge p-2" [ngClass]="p.status == 'OPEN' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
+                </div>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
               </div>
             </div>
           </div>
