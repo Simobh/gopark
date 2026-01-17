@@ -42,46 +42,9 @@ private authService = inject(AuthService);
 
     try {
       await this.authService.loginWithEmail(this.email(), this.password());
-      // Si pas d'erreur, on est connecté (redirection gérée par le service ou ici)
     } catch (error: any) {
-      console.log("Erreur Login Brute:", error); // Gardez ceci pour le debug
-
-      if (error.code === 'auth/multi-factor-auth-required') {
-
-        let resolver = undefined;
-
-        try {
-           resolver = getMultiFactorResolver(this.auth, error);
-        } catch (e) {
-           console.warn("getMultiFactorResolver a échoué, passage au mode manuel.");
-        }
-        if (!resolver) {
-           resolver = (error as any).resolver ||
-                      ((error as any).customData && (error as any).customData.resolver);
-        }
-
-
-        if (resolver) {
-            this.mfaResolver.set(resolver);
-            this.mfaRequired.set(true);
-
-            // Récupération du numéro (hints)
-            const hints = resolver.hints;
-            if (hints && hints.length > 0 && (hints[0] as any).phoneNumber) {
-               this.mfaPhoneNumber.set((hints[0] as any).phoneNumber);
-            }
-            console.log(this.mfaPhoneNumber());
-        } else {
-            this.error.set("Erreur critique : Impossible d'initialiser l'A2F. Contactez le support.");
-            console.error("Resolver MFA introuvable dans l'objet erreur.");
-        }
-
-      } else {
-        const msg = error.code === 'auth/invalid-credential'
-          ? 'Email ou mot de passe incorrect.'
-          : (error.message || 'Une erreur est survenue.');
-        this.error.set(msg);
-      }
+      // On utilise la méthode commune pour gérer l'erreur (A2F ou autre)
+      await this.handleLoginError(error);
     } finally {
       this.loading.set(false);
     }
@@ -246,13 +209,52 @@ private authService = inject(AuthService);
   async onGoogleLogin() {
     this.loading.set(true);
     this.error.set('');
+    this.mfaRequired.set(false);
 
     try {
       await this.authService.loginWithGoogle();
     } catch (error: any) {
-      this.error.set(error);
+      // On utilise la MÊME méthode pour gérer l'erreur Google
+      await this.handleLoginError(error);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async handleLoginError(error: any) {
+    console.log("Erreur Login:", error);
+
+    // Détection A2F
+    if (error.code === 'auth/multi-factor-auth-required') {
+        let resolver = undefined;
+        try {
+           resolver = getMultiFactorResolver(this.auth, error);
+        } catch (e) {
+           console.warn("getMultiFactorResolver failed, fallback manual.");
+        }
+
+        if (!resolver) {
+           resolver = (error as any).resolver ||
+                      ((error as any).customData && (error as any).customData.resolver);
+        }
+
+        if (resolver) {
+            this.mfaResolver.set(resolver);
+            this.mfaRequired.set(true);
+
+            const hints = resolver.hints;
+            if (hints && hints.length > 0 && (hints[0] as any).phoneNumber) {
+               this.mfaPhoneNumber.set((hints[0] as any).phoneNumber);
+            }
+            // Arrêt ici, on attend que l'utilisateur gère l'A2F
+            return;
+        } else {
+            console.error("Resolver A2F introuvable");
+        }
+    }
+
+    // Affichage des erreurs standards
+    const msg = this.translateFirebaseError(error.code) || error.message || 'Une erreur est survenue.';
+    this.error.set(msg);
   }
 }

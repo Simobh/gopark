@@ -479,6 +479,7 @@ export class AuthService {
   }
 
   async loginWithEmail(email: string, password: string) {
+    console.log("Tentative de connexion (Version SANS try/catch)");
     const credential = await signInWithEmailAndPassword(this.auth, email, password);
     this.router.navigate(['/home']);
     return credential;
@@ -629,14 +630,11 @@ export class AuthService {
   }
 
   async loginWithGoogle() {
-    try {
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(this.auth, provider);
-      this.router.navigate(['/home']);
-      return credential;
-    } catch (error: any) {
-      throw this.handleError(error);
-    }
+    const provider = new GoogleAuthProvider();
+    const credential = await signInWithPopup(this.auth, provider);
+    this.router.navigate(['/home']);
+    return credential;
+
   }
 
   async logout() {
