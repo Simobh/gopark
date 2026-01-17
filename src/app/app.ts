@@ -1,15 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, HostListener } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { HostListener } from '@angular/core';
-
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [
+    RouterOutlet,
+    CommonModule
+],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrl: './app.css'
 })
 export class App {
   protected readonly title = signal('gopark');
@@ -21,7 +22,7 @@ export class App {
     this.showBackToTop = window.scrollY > 300;
   }
 
-  scrollTop() { 
+  scrollTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

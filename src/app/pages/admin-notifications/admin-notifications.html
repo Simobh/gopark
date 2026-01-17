@@ -1,0 +1,29 @@
+<div class="container py-5">
+  <h2>📩 Messages reçus</h2>
+
+  <div
+    *ngFor="let msg of messages$ | async"
+    class="card my-3 p-3"
+    [class.border-primary]="!msg.read"
+  >
+    <strong>{{ msg.name }}</strong>
+    <span *ngIf="!msg.read" class="badge bg-danger ms-2">
+      Nouveau
+    </span>
+
+    <p class="mt-2">{{ msg.message }}</p>
+
+    <small>
+      {{ msg.email }} •
+      {{ msg.createdAt?.toDate() | date: 'short' }}
+    </small>
+
+    <button
+      *ngIf="!msg.read"
+      class="btn btn-sm btn-outline-success mt-2"
+      (click)="markAsRead(msg.id)"
+    >
+      Marquer comme lu
+    </button>
+  </div>
+</div>

@@ -2,6 +2,10 @@ import { Component, OnInit, OnDestroy, signal, inject, PLATFORM_ID, afterNextRen
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { Firestore, collection, collectionData, query, where } from '@angular/fire/firestore';
+import { Observable, map } from 'rxjs';
+import { Router, RouterModule } from '@angular/router';
+
 
 @Component({
   selector: 'app-navbar',
@@ -10,12 +14,22 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './navbar.css'
 })
 export class Navbar implements OnInit, OnDestroy {
+  public router = inject(Router);
   activeSection = signal<string>('home');
   private observer?: IntersectionObserver;
   protected authService = inject(AuthService);
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
   private scrollHandler?: () => void;
+    private firestore = inject(Firestore);
+
+  unreadCount$: Observable<number> = collectionData(
+    query(
+      collection(this.firestore, 'contactMessages'),
+      where('read', '==', false)
+    )
+  ).pipe(map(messages => messages.length));
+
 
   constructor() {
     // Utiliser afterNextRender pour s'assurer que le code s'exécute uniquement côté client après le rendu
@@ -95,7 +109,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   private updateActiveSectionOnScroll() {
     if (!this.isBrowser || typeof window === 'undefined') return;
-    
+
     const sections = ['home', 'about', 'services', 'how', 'contact'];
     const scrollPosition = window.scrollY + 150; // Offset pour la navbar fixe
 
@@ -117,7 +131,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (!this.isBrowser) return;
-    
+
     this.observer?.disconnect();
     if (this.scrollHandler && typeof window !== 'undefined') {
       window.removeEventListener('scroll', this.scrollHandler);

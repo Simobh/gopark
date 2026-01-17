@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LandingPage } from './landing-page';
+import { AdminNotifications } from './admin-notifications';
 
-describe('LandingPage', () => {
-  let component: LandingPage;
-  let fixture: ComponentFixture<LandingPage>;
+describe('AdminNotifications', () => {
+  let component: AdminNotifications;
+  let fixture: ComponentFixture<AdminNotifications>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LandingPage]
+      imports: [AdminNotifications]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(LandingPage);
+    fixture = TestBed.createComponent(AdminNotifications);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

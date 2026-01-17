@@ -8,21 +8,43 @@
       </button>
 
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav align-items-center">
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('home')" (click)="scrollToHome()" >Accueil</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('about')" (click)="scrollToAbout()">À Propos</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('services')" (click)="scrollToServices()">Services</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" [class.active]="isActive('how')" (click)="scrollToHow()">Comment Ça Marche</a>
-          </li>
-        </ul>
+        @if (!router.url.includes('/settings')) {
+          <ul class="navbar-nav align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="isActive('home')" (click)="scrollToHome()" >Accueil</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="isActive('about')" (click)="scrollToAbout()">À Propos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="isActive('services')" (click)="scrollToServices()">Services</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" [class.active]="isActive('how')" (click)="scrollToHow()">Comment Ça Marche</a>
+            </li>
+          </ul>
+        }
         @if (authService.currentUser(); as user) {
+
+          @if (user.email === 'gopark.management@gmail.com' && !router.url.includes('/settings') ) {
+            <a
+              routerLink="/admin/notifications"
+              class="btn btn-outline-dark ms-3 position-relative"
+              title="Notifications"
+            >
+              <i class="bi bi-bell-fill "></i>
+              @if (unreadCount$ | async; as count) {
+                @if (count > 0) {
+                  <span
+                    class="badge bg-danger position-absolute top-0 start-100 translate-middle"
+                  >
+                    {{ count }}
+                  </span>
+                }
+              }
+            </a>
+          }
+
             <div class="dropdown ms-3">
               <button
                 class="btn btn-outline-dark dropdown-toggle"
@@ -35,32 +57,35 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li>
                   <a class="dropdown-item" routerLink="/favorites">
-                     Mes favoris
+                    <i class="bi bi-heart-fill me-2"></i> Mes favoris
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item" routerLink="/history">
-                     Historique
+                    <i class="bi bi-clock-history me-2"></i> Historique
                   </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                   <a class="dropdown-item" routerLink="/settings">
-                     Paramètres
+                    <i class="bi bi-gear-fill me-2"></i> Paramètres
                   </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                   <button class="dropdown-item text-danger" (click)="onLogout()">
-                     Déconnexion
+                    <i class="bi bi-box-arrow-right me-2"></i> Déconnexion
                   </button>
                 </li>
               </ul>
             </div>
-          }
-           @else {
-          <a routerLink="/login" class="btn btn-outline-dark ms-3">SE CONNECTER</a>
+
+        } @else {
+          <a routerLink="/login" class="btn btn-outline-dark ms-3">
+            SE CONNECTER
+          </a>
         }
+
       </div>
     </div>
   </nav>
