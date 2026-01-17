@@ -84,6 +84,13 @@ export class SettingsComponent implements OnInit {
       }
     });
 
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        this.loadUserAvatar(user.uid);
+      }
+    });
+
     // Effet pour charger les données Firestore quand l'utilisateur est connecté
     effect(() => {
       const user = this.authService.currentUser();
@@ -236,6 +243,30 @@ export class SettingsComponent implements OnInit {
     localStorage.setItem(LS_AVATAR_KEY, clean);
   }
 
+  async loadUserAvatar(uid: string) {
+    // 1. D'abord le cache local (rapide)
+    const cached = localStorage.getItem(LS_AVATAR_KEY);
+    if (cached) {
+      this.avatarPreviewUrl.set(cached);
+    }
+
+    // 2. Ensuite la source de vérité (Storage)
+    const url = await this.authService.getAvatarFromStorage(uid);
+    if (url) {
+      const timestamp = new Date().getTime();
+
+      // --- CORRECTION DU BUG DES DEUX '?' ---
+      // Si l'URL a déjà des paramètres (ce qui est le cas avec Firebase), on utilise '&'
+      // Sinon on utilise '?'
+      const separator = url.includes('?') ? '&' : '?';
+      const secureUrl = `${url}${separator}t=${timestamp}`;
+      // --------------------------------------
+
+      this.avatarPreviewUrl.set(secureUrl);
+      localStorage.setItem(LS_AVATAR_KEY, secureUrl);
+    }
+  }
+
   private async loadAvatar() {
     const user = this.authService.currentUser();
     if (!user) return;
@@ -274,27 +305,24 @@ export class SettingsComponent implements OnInit {
     const file = input.files?.[0];
     if (!file) return;
 
-    // ✅ preview immédiat (temporaire)
+    // Preview immédiat (local blob) pour la réactivité
     const localPreview = URL.createObjectURL(file);
     this.avatarPreviewUrl.set(localPreview);
 
     try {
-      // ✅ upload => renvoie un downloadURL Firebase Storage
+      // Upload vers Storage
       const uploadedUrl = await this.authService.uploadAvatar(file);
 
-      // ✅ afficher + stocker (PERSISTANT)
-      this.avatarPreviewUrl.set(this.withCacheBuster(uploadedUrl));
-      this.saveAvatarToLocalStorage(uploadedUrl);
+      // On construit l'URL finale avec le cache buster
+      const finalUrl = `${uploadedUrl}?t=${new Date().getTime()}`;
 
-      // IMPORTANT: libérer l'URL blob
-      URL.revokeObjectURL(localPreview);
+      // Mise à jour de l'affichage et du stockage local
+      this.avatarPreviewUrl.set(finalUrl);
+      localStorage.setItem(LS_AVATAR_KEY, finalUrl);
 
       this.avatarSuccess.set('Photo mise à jour avec succès');
-      this.avatarError.set(null);
     } catch (e: any) {
-      this.avatarError.set(e?.message || 'Erreur lors de l’upload');
-      this.avatarSuccess.set(null);
-      console.error(e);
+      this.avatarError.set("Erreur lors de l'upload");
     }
   }
 

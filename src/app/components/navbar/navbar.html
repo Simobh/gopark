@@ -9,6 +9,7 @@
 
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         @if (!router.url.includes('/settings') &&
+              !router.url.includes('/history') &&
               !router.url.includes('/admin')) {
           <ul class="navbar-nav align-items-center">
             <li class="nav-item">
@@ -27,7 +28,7 @@
         }
         @if (authService.currentUser(); as user) {
 
-          @if (user.email === 'gopark.management@gmail.com' && !router.url.includes('/settings') ) {
+          @if (user.email === 'gopark.management@gmail.com') {
             <a
               routerLink="/admin/notifications"
               class="btn btn-outline-dark ms-3 position-relative"
