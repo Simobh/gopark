@@ -1,253 +1,60 @@
-.setting-container {
+.settings-container {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background-image: url('/assets/images/settings.jpeg');
   background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-blend-mode: overlay;
+  padding: 20px;
 }
-.password-wrap {
+
+.main-card {
   width: 100%;
-}
-
-.password-card {
-  width: 100%;
-}
-
-/* ✅ Logo sidebar */
-.sidebar-logo {
-  border-bottom: 1px solid #f1f1f1;
-}
-.sidebar-logo img {
-  max-height: 55px;
-}
-
-/* Conserve les styles A2F existants (inchangés) */
-.settings-section {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.settings-section:last-of-type {
-  border-bottom: none;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.status-badge {
-  padding: 6px 16px;
+  max-width: 1200px; /* Largeur augmentée */
+  height: 750px;
   border-radius: 20px;
-  font-size: 14px;
+  background-color: #fff;
+}
+
+.sidebar-fixed {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #f0f2f5;
+}
+
+.content-fluid {
+  flex-grow: 1;
+  min-width: 0;
+  background-color: #f8f9fa; /* Gris clair pour que la carte ressorte */
+}
+
+/* Styles Communs */
+.list-group-item {
+  background-color: transparent;
+  color: #6c757d;
   font-weight: 600;
-  background: #f8d7da;
-  color: #721c24;
+  font-size: 0.95rem;
+  padding: 12px 15px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.status-badge.enabled {
-  background: #d4edda;
-  color: #155724;
+.list-group-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #000;
 }
 
-.mfa-section {
-  background: #f8f9fa;
-  padding: 18px;
-  border-radius: 12px;
-  border: 2px solid #e0e0e0;
+.list-group-item.active {
+  background-color: #0d6efd !important;
+  color: white !important;
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.25);
 }
 
-.info-text {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
-  margin-top: 12px;
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
 }
 
-/* Styles pour l'A2F */
-.mfa-setup,
-.mfa-info {
-  margin-top: 14px;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.mfa-form {
-  margin-top: 16px;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  padding: 16px;
-  background: #ffffff;
-  border: 2px solid #667eea;
-  border-radius: 12px;
-}
-
-.mfa-form .form-group {
-  margin-bottom: 16px;
-  display: block !important;
-}
-
-.mfa-form label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
-}
-
-.mfa-form input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 16px;
-  box-sizing: border-box;
-  transition: border-color 0.3s;
-}
-
-.mfa-form input:focus {
-  outline: none;
-  border-color: #667eea;
-}
-
-.mfa-form input:disabled {
-  background: #f5f5f5;
-  cursor: not-allowed;
-}
-
-.form-hint {
-  display: block;
-  margin-top: 6px;
-  color: #999;
-  font-size: 12px;
-}
-
-.mfa-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.mfa-actions .btn {
-  flex: 1;
-}
-
-.btn-danger {
-  background: #ff4757;
-  color: white;
-  margin-top: 16px;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #ee5a6f;
-  transform: translateY(-2px);
-}
-
-.mfa-factors {
-  margin: 16px 0;
-  padding: 14px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.mfa-factors h3 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  color: #555;
-}
-
-.mfa-factor-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.mfa-factor-item:last-child {
-  margin-bottom: 0;
-}
-
-.factor-icon {
-  font-size: 24px;
-}
-
-.factor-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.factor-details strong {
-  color: #333;
-}
-
-.factor-phone {
-  color: #666;
-  font-size: 14px;
-}
-
-#recaptcha-container {
-  margin: 20px 0;
-  display: flex;
-  justify-content: center;
-}
-
-/* Barre de sécurité du mot de passe */
-.password-strength-bar {
-  width: 100%;
-  height: 8px;
-  background: #e9ecef;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.strength-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 0.4s ease, background-color 0.3s ease;
-  border-radius: 6px;
-}
-
-/* Décale la sidebar vers le bas pour l’aligner avec le contenu principal */
-.settings-sidebar {
-  margin-top: 64px; /* ajuste si besoin : 56px / 72px */
-}
-
-/* ✅ TOPBAR comme une navbar */
-.settings-topbar {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 10px 0 6px 0;
-}
-
-.topbar-logo {
-  height: 55px;
-  width: auto;
-  object-fit: contain;
-}
-
-/* Header main + bouton retour (tes styles existants) */
-.main-header .back-btn {
-  text-decoration: none;
-  color: #0d6efd;
-  font-weight: 600;
-  font-size: 14px;
-}
-.main-header .back-btn:hover {
-  text-decoration: underline;
+.form-control:focus {
+  box-shadow: none;
+  border: 1px solid #0d6efd;
+  background-color: #fff !important;
 }

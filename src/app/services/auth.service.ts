@@ -161,6 +161,9 @@ export class AuthService {
 
       return true;
     } catch (error: any) {
+      if (error.code === 'auth/multi-factor-auth-required') {
+         throw error;
+      }
       console.error('Erreur lors du changement de mot de passe:', error);
       throw this.handleError(error);
     }
@@ -476,22 +479,9 @@ export class AuthService {
   }
 
   async loginWithEmail(email: string, password: string) {
-    try {
-      const credential = await signInWithEmailAndPassword(this.auth, email, password);
-      this.router.navigate(['/home']);
-      return credential;
-    } catch (error: any) {
-      // Vérifier si l'erreur indique qu'un MFA est requis
-      if (error.code === 'auth/multi-factor-auth-required') {
-        // L'erreur contient un resolver MFA
-        throw {
-          code: 'auth/multi-factor-auth-required',
-          resolver: error.resolver,
-          message: 'Authentification à deux facteurs requise'
-        };
-      }
-      throw this.handleError(error);
-    }
+    const credential = await signInWithEmailAndPassword(this.auth, email, password);
+    this.router.navigate(['/home']);
+    return credential;
   }
 
   async resolveMFA(resolver: MultiFactorResolver, verificationId: string, verificationCode: string) {
@@ -589,10 +579,17 @@ export class AuthService {
       }
 
       const session = resolver.session;
-      const phoneInfoOptions = {
-        phoneNumber: phoneNumber,
-        session: session
-      };
+      let phoneInfoOptions: any = { session };
+
+      // Si le numéro contient des étoiles (*), c'est un masque : on utilise l'objet 'hint' de Firebase
+      if (phoneNumber.includes('*')) {
+          // On utilise le premier facteur enregistré par défaut
+          phoneInfoOptions.multiFactorHint = resolver.hints[0];
+          console.log("Utilisation du hint MFA (numéro masqué détecté)");
+      } else {
+          // Sinon, l'utilisateur a tapé un vrai numéro complet
+          phoneInfoOptions.phoneNumber = phoneNumber;
+      }
 
       // Import dynamique de firebase/auth pour accéder à verifyPhoneNumber
       const firebaseAuth = await import('firebase/auth');
@@ -743,7 +740,7 @@ export class AuthService {
         return (error as any).message || errorCode || 'Une erreur est survenue';
     }
   }
-  
+
   async deleteAccount(password?: string) {
     const currentUser = this.auth.currentUser;
     if (!currentUser) throw new Error('Aucun utilisateur connecté');
