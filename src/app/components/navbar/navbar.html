@@ -8,7 +8,8 @@
       </button>
 
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        @if (!router.url.includes('/settings')) {
+        @if (!router.url.includes('/settings') &&
+              !router.url.includes('/admin')) {
           <ul class="navbar-nav align-items-center">
             <li class="nav-item">
               <a class="nav-link" [class.active]="isActive('home')" (click)="scrollToHome()" >Accueil</a>
