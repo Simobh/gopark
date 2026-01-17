@@ -44,6 +44,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'admin/notifications',
+    loadComponent: () =>
+      import('./pages/admin-notifications/admin-notifications').then(m => m.AdminNotifications),
+    canActivate: [authGuard],
+  },
+  {
     path: '**',
     redirectTo: 'home',
   },
