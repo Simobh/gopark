@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, effect, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, ChangeDetectorRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ParkingService } from '../../services/api.service';
 import { GeocodingService } from '../../services/geocoding.service';
@@ -9,6 +9,9 @@ import { AuthService } from '../../services/auth.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
 import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay, take } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { time } from 'console';
+
 
 @Component({
   selector: 'app-parkings',
@@ -16,8 +19,8 @@ import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay,
   imports: [CommonModule, MapComponent, FormsModule],
   templateUrl: './parkings.component.html'
 })
-export class ParkingsComponent implements OnInit, OnDestroy {
-    // Permet d'appeler les fonctions de la carte (comme zoomToParking)
+export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
+
     @ViewChild(MapComponent) mapComp!: MapComponent;
 
     isLoading = false;
@@ -43,7 +46,8 @@ export class ParkingsComponent implements OnInit, OnDestroy {
       public authService: AuthService,
       private favoritesService: FavoritesService,
       private historyService: HistoryService,
-      private cdr: ChangeDetectorRef
+      private cdr: ChangeDetectorRef,
+      private route: ActivatedRoute
     ) {
       effect(() => {
         const user = this.authService.currentUser();
@@ -95,9 +99,17 @@ export class ParkingsComponent implements OnInit, OnDestroy {
 
     focusOnParking(parking: any) {
       if (this.mapComp && parking.position && parking.position.lat && parking.position.lon) {
+        console.log('jjj', this.mapComp);
         this.mapComp.zoomToParking(parking.position.lat, parking.position.lon);
       }
       this.addHistory(parking);
+    }
+
+    displayLocation(lat: any, lon: any) {
+      console.log('jjj', this.mapComp);
+      if (this.mapComp && lat && lon) {
+        this.mapComp.zoomToParking(lat, lon);
+      }
     }
 
     addHistory(parking: any) {
@@ -130,5 +142,31 @@ export class ParkingsComponent implements OnInit, OnDestroy {
         this.favoritesService.addFavorite(this.userId, parking)
           .catch(err => console.error('Erreur ajout:', err));
       }
+    }
+
+    ngAfterViewInit(): void {
+      this.route.queryParams.subscribe(params => {
+        // Vérification dans la console
+        console.log('Paramètres reçus :', params);
+
+        const lat = parseFloat(params['lat']);
+        const lon = parseFloat(params['lon']);
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+          console.log(`Tentative de zoom sur : ${lat}, ${lon}`);
+          
+          // On utilise un délai pour laisser le temps au moteur de rendu
+          setTimeout(() => {
+            if (this.mapComp) {
+              console.log('MapComponent trouvé, appel de zoomToParking', this.mapComp);
+              this.displayLocation(lat, lon);
+            } else {
+              console.error('MapComponent est toujours indéfini (@ViewChild a échoué)');
+            }
+          }, 10000); // Augmenté légèrement pour le test
+        } else {
+          console.warn('Coordonnées lat/lon invalides ou absentes de l\'URL');
+        }
+      });
     }
 }

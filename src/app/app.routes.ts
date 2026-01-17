@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard, publicGuard } from './guards/auth.guard';
-import { adminGuard } from './guards/admin-guard';
 
 export const routes: Routes = [
   {
@@ -35,16 +34,14 @@ export const routes: Routes = [
   {
     path: 'search',
     loadComponent: () =>
-      import('./pages/parkings/parkings.component')
-        .then(m => m.ParkingsComponent),
+      import('./pages/parkings/parkings.component').then(m => m.ParkingsComponent),
+    canActivate: [authGuard],
   },
-
   {
-    path: 'admin/notifications',
-    canActivate: [adminGuard],
+    path: 'history',
     loadComponent: () =>
-      import('./pages/admin-notifications/admin-notifications')
-        .then(m => m.AdminNotifications),
+      import('./pages/history/history').then(m => m.HistoryComponent),
+    canActivate: [authGuard],
   },
   {
     path: '**',

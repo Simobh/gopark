@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, updateDoc, collectionData, doc, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, updateDoc, collectionData, doc, query, where, deleteDoc, getDocs } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -27,4 +27,21 @@ export class HistoryService {
       searchedAt: new Date() 
     });
   }
+
+  removeHistory(firebaseId: string) {
+    const favDoc = doc(this.firestore, `${this.collectionName}/${firebaseId}`);
+    return deleteDoc(favDoc);
+  }
+
+  async clearUserHistory(userId: string) {
+    const q = query(collection(this.firestore, 'history'), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    
+    const deletePromises = querySnapshot.docs.map(document => 
+      deleteDoc(doc(this.firestore, `history/${document.id}`))
+    );
+    
+    return Promise.all(deletePromises);
+  }
+
 }

@@ -11,13 +11,13 @@ export class ParkingMapperService {
     if (!apiResponse?.results) return [];
 
     return apiResponse.results.map((r: any, index: number): Parking => {
-      const address = [r.numvoie, r.typevoie, r.nomvoie]
+      const address = [r.numvoie, r.typevoie, r.nomvoie, 'Paris', r.arrond, 'eme']
         .filter(Boolean)
         .join(' ');
 
       return {
         id: r.id_old ?? `paris-${index}`,
-        name: `Stationnement ${r.locsta ?? ''}`.trim(),
+        name: `parking ${r.locsta ?? ''} ${r.nomvoie}`.trim(),
         city: 'paris',
 
         position: {
