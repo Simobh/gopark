@@ -9,17 +9,13 @@
         <div>
           <div class="d-flex align-items-center gap-3 mb-2">
             <i class="bi bi-clock-history"></i>
-            <h2 class="fw-bold mb-0">Historique</h2>
+            <h2 class="fw-bold mb-0">Favoris</h2>
           </div>
 
           <p class="text-muted mb-0">
-            Les parkings que vous avez consultés récemment.
+            Les parkings que vous avez mis en favoris.
           </p>
         </div>
-        <button (click)="clearAllHistory()" class="fw-bold  btn btn-sm btn-outline-danger d-flex align-items-center gap-2">
-            <i class="bi bi-trash3-fill"></i>
-            Vider
-        </button>
 
       </div>
 
@@ -27,8 +23,8 @@
     </div>
     <div class="historique-section">
 
-      <ng-container *ngIf="historyItems$ | async as historyList">
-      <div *ngFor="let h of historyList" class="historique-card">
+      <ng-container *ngIf="FavorisItems$ | async as favorisList">
+      <div *ngFor="let f of favorisList" class="historique-card">
         <div class="row align-items-center g-4">
           <div class="col-12 col-md-3 border-end">
             <div class="position-relative">
@@ -36,34 +32,31 @@
                 src="/assets/images/recherche_parking.png"
                 class="historique-img"
               />
-              <span class="badge bg-dark position-absolute top-0 start-0 m-2">
-                Vu récemment
-              </span>
             </div>
           </div>
           <div class="col-12 col-md-6 ps-md-4">
             <div class="d-flex align-items-center gap-2 mb-1">
-              <h5 class="fw-bold mb-0">{{ h.parking.name }}</h5>
+              <h5 class="fw-bold mb-0">{{ f.parking.name }}</h5>
               <span class="badge bg-success-subtle text-success">
-                Historique
+                Favoris
               </span>
             </div>
             <div class="info-row">
-              <span>{{ h.parking.address}}</span>
+              <span>{{ f.parking.address}}</span>
             </div>
             <div class="info-row info-date">
-              <span>Consulté le {{ formatDate(h.searchedAt) | date:'dd/MM/yyyy à HH:mm' }}</span>
+              <span>mis en favoris le {{ formatDate(f.createdAt) | date:'dd/MM/yyyy à HH:mm' }}</span>
             </div>
           </div>
           <div class="col-12 col-md-3 text-md-end">
             <button 
                 [routerLink]="['/search']" 
-                [queryParams]="{ lat: h.parking.position.lat, lon: h.parking.position.lon }"
+                [queryParams]="{ lat: f.parking.position.lat, lon: f.parking.position.lon }"
                 class="fw-bold  btn btn-primary btn-sm w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-geo-alt"></i>
                 Voir
-            </button>
-            <button (click)="removeHistoryItem(h.firebaseId)" class="fw-bold btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+            </button> 
+            <button (click)="removeFavorite(f.firebaseId)" class="fw-bold btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
               <i class="bi bi-trash"></i>
                Supprimer
             </button>
