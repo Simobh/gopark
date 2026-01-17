@@ -3,7 +3,7 @@
 <div class="settings-container d-flex align-items-center justify-content-center">
   <div class="card shadow-lg border-0 overflow-hidden main-card d-flex flex-column mt-5">
 
-    <div class="d-flex h-100">
+    <div class="d-flex flex-column flex-lg-row h-100">
 
       <div class="sidebar-fixed p-4 d-flex flex-column border-end">
         <div class="d-flex align-items-center mb-4 border-bottom pb-3 border-secondary border-opacity-10">
@@ -48,7 +48,7 @@
               }
             </h4>
             <div class="d-flex gap-2">
-              <button class="btn btn-success btn-sm d-flex align-items-center" (click)="goBack()">
+              <button class="btn btn-success btn-sm d-flex align-items-center fw-bold" (click)="goBack()">
                 <i class="bi bi-house-door-fill me-1"></i> Retour à l'accueil
               </button>
             </div>
@@ -230,7 +230,7 @@
                   <div class="alert alert-success bg-opacity-10 border-success text-success">
                     <i class="bi bi-shield-lock-fill me-2"></i> Votre compte est protégé.
                   </div>
-                  <button class="btn btn-outline-danger" (click)="onDisableMFA()" [disabled]="mfaLoading()">
+                  <button class="btn btn-danger" (click)="onDisableMFA()" [disabled]="mfaLoading()">
                     {{ mfaLoading() ? 'Désactivation...' : 'Désactiver l\'A2F' }}
                   </button>
               } @else {
@@ -310,3 +310,6 @@
     </div>
   </div>
 </div>
+
+
+<app-footer></app-footer>

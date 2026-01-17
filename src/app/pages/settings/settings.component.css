@@ -8,11 +8,12 @@
 
 .main-card {
   width: 100%;
-  max-width: 1200px; /* Largeur augmentée */
-  height: 750px;
+  max-width: 1100px; /* Largeur augmentée */
+  height: 650px;
   border-radius: 20px;
   background-color: #fff;
 }
+
 
 .sidebar-fixed {
   width: 280px;
@@ -57,4 +58,58 @@
   box-shadow: none;
   border: 1px solid #28a745;
   background-color: #fff !important;
+}
+
+
+@media (max-width: 991.98px) {
+
+  .settings-container {
+    padding: 10px;
+  }
+
+  .main-card {
+    max-width: 100%;
+    height: auto;                /* ✅ AUTO SUR MOBILE */
+    border-radius: 14px;
+  }
+
+  /* Stack sidebar + contenu */
+  .main-card > .d-flex {
+    flex-direction: column;
+  }
+
+  /* Sidebar mobile */
+  .sidebar-fixed {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem;
+  }
+
+  /* Menu VERTICAL (important) */
+  .sidebar-fixed .list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sidebar-fixed .list-group-item {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 1rem;
+    border-radius: 12px;
+    white-space: normal;
+    justify-content: flex-start;
+  }
+
+  /* Contenu prend toute la largeur */
+  .content-fluid {
+    width: 100%;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .content-fluid > .p-4 {
+    padding: 16px !important;
+  }
 }

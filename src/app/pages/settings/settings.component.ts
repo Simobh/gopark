@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { Location } from '@angular/common';
 import { Navbar } from '../../components/navbar/navbar';
 import { Router } from '@angular/router';
+import { Footer } from '../../components/footer/footer';
 
 const LS_AVATAR_KEY = 'gopark_avatar_preview';
 const LS_FIRSTNAME_KEY = 'gopark_first_name';
@@ -13,7 +14,7 @@ declare const bootstrap: any;
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, Navbar],
+  imports: [FormsModule, Navbar, Footer],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
 })

@@ -97,6 +97,10 @@
 .contact-hours {
   margin-top: 2rem;
 }
+.contact-section-title {
+  font-size: 1.2rem; /* essaie 1.1 / 1.25 / 1.5 selon ton goût */
+}
+
 
 .hours-title {
   font-weight: 700;
@@ -121,3 +125,16 @@
   color: #6c757d;
 }
 
+@media (max-width: 576px) {
+  #contact {
+    padding: 2rem 1rem;
+  }
+
+  .contact-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .btn-submit {
+    width: 100%;
+  }
+}

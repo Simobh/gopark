@@ -1,75 +1,47 @@
-<section id="contact" class="py-5 container">
-  <div class="row">
-    <div class="col-md-6">
-      <h5 class="contact-section-title">NOUS JOINDRE</h5>
-      <h2 class="contact-subtitle mb-4">Pour toute question ou demande.</h2>
+<section id="contact" class="py-5">
+  <div class="container">
+    <div class="row justify-content-center justify-content-md-start">
+      <div class="col-12 col-md-6 col-lg-5">
 
-      <form
-        class="contact-form"
-        [formGroup]="contactForm"
-        (ngSubmit)="submit()"
-      >
+        <h5 class="contact-section-title fw-bold mb-4">NOUS JOINDRE</h5>
+        <h2 class="contact-subtitle mb-4">Pour toute question ou demande.</h2>
 
-        <div class="mb-3">
-          <label class="form-label">Nom*</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Jane Smith"
-            formControlName="name"
-          >
-        </div>
+        <form class="contact-form" [formGroup]="contactForm" (ngSubmit)="submit()">
 
-        <div class="mb-3">
-          <label class="form-label">Adresse e-mail*</label>
-          <input
-            type="email"
-            class="form-control"
-            placeholder="email@website.com"
-            formControlName="email"
-          >
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Nom*</label>
+            <input type="text" class="form-control" placeholder="Jane Smith" formControlName="name">
+          </div>
 
-        <div class="mb-3">
-          <label class="form-label">Numéro de téléphone</label>
-          <input
-            type="tel"
-            class="form-control"
-            placeholder="+33 0 00 00 00 00"
-            formControlName="phone"
-          >
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Adresse e-mail*</label>
+            <input type="email" class="form-control" placeholder="email@website.com" formControlName="email">
+          </div>
 
-        <div class="mb-3">
-          <label class="form-label">Message</label>
-          <textarea
-            class="form-control"
-            rows="4"
-            formControlName="message"
-          ></textarea>
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Numéro de téléphone</label>
+            <input type="tel" class="form-control" placeholder="+33 0 00 00 00 00" formControlName="phone">
+          </div>
 
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            formControlName="consent"
-            id="consent"
-          >
-          <label class="form-check-label" for="consent">
-            J'autorise ce site à conserver ma soumission afin qu'il puisse répondre à ma demande.
-          </label>
-        </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" rows="4" formControlName="message"></textarea>
+          </div>
 
-        <button
-          type="submit"
-          class="btn btn-submit"
-          [disabled]="contactForm.invalid"
-        >
-          ENVOYER
-        </button>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="consent" formControlName="consent">
+            <label class="form-check-label" for="consent">
+              J'autorise ce site à conserver ma soumission afin qu'il puisse répondre à ma demande.
+            </label>
+          </div>
 
-      </form>
+          <button type="submit" class="btn btn-submit w-100">
+            ENVOYER
+          </button>
+
+        </form>
+
+      </div>
     </div>
   </div>
 </section>

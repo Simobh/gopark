@@ -12,5 +12,13 @@
     .content {
       z-index: 2;
     }
+    .btn-success {
+      --bs-btn-bg: #32aa27;
+      --bs-btn-border-color: #32aa27;
+      --bs-btn-hover-bg: #2b8f22;
+      --bs-btn-hover-border-color: #2b8f22;
+      --bs-btn-active-bg: #257a1d;
+      --bs-btn-active-border-color: #257a1d;
+    }
   }
   
