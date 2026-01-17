@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, effect, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ParkingService } from '../../services/api.service';
 import { GeocodingService } from '../../services/geocoding.service';
@@ -7,7 +7,8 @@ import { MapComponent } from '../map/map';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { FavoritesService } from '../../services/favorites.service';
-import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay } from 'rxjs';
+import { HistoryService } from '../../services/history.service';
+import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay, take } from 'rxjs';
 
 @Component({
   selector: 'app-parkings',
@@ -16,6 +17,9 @@ import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay 
   templateUrl: './parkings.component.html'
 })
 export class ParkingsComponent implements OnInit, OnDestroy {
+    // Permet d'appeler les fonctions de la carte (comme zoomToParking)
+    @ViewChild(MapComponent) mapComp!: MapComponent;
+
     isLoading = false;
     address = '';
     coords: { lat: number; lon: number } | null = null;
@@ -38,17 +42,17 @@ export class ParkingsComponent implements OnInit, OnDestroy {
       private geocodingService: GeocodingService,
       public authService: AuthService,
       private favoritesService: FavoritesService,
-      private cdr: ChangeDetectorRef // Correction : Injecter le détecteur de changements
+      private historyService: HistoryService,
+      private cdr: ChangeDetectorRef
     ) {
       effect(() => {
         const user = this.authService.currentUser();
         if (user) {
           this.userId = user.uid;
           this.favSubscription?.unsubscribe();
-          // S'abonner aux favoris
           this.favSubscription = this.favoritesService.getFavorites(user.uid).subscribe(favs => {
             this.user_favoris = favs;
-            this.cdr.detectChanges(); // Correction : Forcer la mise à jour visuelle des étoiles
+            this.cdr.detectChanges();
           });
         } else {
           this.userId = null;
@@ -89,8 +93,28 @@ export class ParkingsComponent implements OnInit, OnDestroy {
       });
     }
 
+    focusOnParking(parking: any) {
+      if (this.mapComp && parking.position && parking.position.lat && parking.position.lon) {
+        this.mapComp.zoomToParking(parking.position.lat, parking.position.lon);
+      }
+      this.addHistory(parking);
+    }
+
+    addHistory(parking: any) {
+      if (!this.userId) return;
+      this.historyService.getHistory(this.userId).pipe(take(1)).subscribe(list => {
+        const dupe = list.find(item => item.parking.id === parking.id);
+
+        if (dupe) {
+          this.historyService.updateHistoryDate(dupe.firebaseId).catch(err => console.error('Erreur mise à jour historique :', err));
+        } else {
+          this.historyService.addHistory(this.userId!, parking).catch(err => console.error('Erreur ajout historique :', err));
+        }
+      });
+    }
+
     isFavorite(parkingId: string): any {
-      return this.user_favoris.find(f => f.parking.id === parkingId);
+      return this.user_favoris.find(f => f.parking && f.parking.id === parkingId);
     }
 
     toggleFavorite(parking: any) {
@@ -98,16 +122,12 @@ export class ParkingsComponent implements OnInit, OnDestroy {
         alert("Veuillez vous connecter pour gérer vos favoris.");
         return;
       }
-
       const favoriteDoc = this.isFavorite(parking.id);
-
       if (favoriteDoc) {
         this.favoritesService.removeFavorite(favoriteDoc.firebaseId)
-          .then(() => console.log('Favori supprimé'))
           .catch(err => console.error('Erreur suppression:', err));
       } else {
         this.favoritesService.addFavorite(this.userId, parking)
-          .then(() => console.log('Favori ajouté'))
           .catch(err => console.error('Erreur ajout:', err));
       }
     }
