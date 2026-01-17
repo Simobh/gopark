@@ -10,7 +10,7 @@ export const authGuard: CanActivateFn = () => {
   
   return user(auth).pipe(
     map(currentUser => {
-      if (currentUser) {
+      if (!currentUser?.isAnonymous) {
         return true;
       }
       router.navigate(['/login']);
@@ -25,7 +25,7 @@ export const publicGuard: CanActivateFn = () => {
   
   return user(auth).pipe(
     map(currentUser => {
-      if (!currentUser) {
+      if (!currentUser?.isAnonymous) {
         return true;
       }
       router.navigate(['/home']);

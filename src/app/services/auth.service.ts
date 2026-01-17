@@ -1,5 +1,9 @@
-
 import { Injectable, inject, signal } from '@angular/core';
+import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { deleteUser } from 'firebase/auth';
+import { deleteDoc } from '@angular/fire/firestore';
+import { deleteObject } from 'firebase/storage';
 import {
   Auth,
   createUserWithEmailAndPassword,
@@ -11,14 +15,16 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   multiFactor,
+  updatePassword,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
   reauthenticateWithCredential,
   EmailAuthProvider,
   type User,
-  type MultiFactorResolver
+  type MultiFactorResolver,
+  updateProfile
 } from '@angular/fire/auth';
-import { RecaptchaVerifier, getAuth } from 'firebase/auth';
+import { RecaptchaVerifier, getAuth, signInWithCredential } from 'firebase/auth';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -27,6 +33,7 @@ import { Router } from '@angular/router';
 export class AuthService {
   private auth = inject(Auth);
   private router = inject(Router);
+  private firestore = inject(Firestore);
 
   currentUser = signal<User | null>(null);
 
@@ -35,35 +42,71 @@ export class AuthService {
       this.currentUser.set(currentUser);
     });
   }
-
-  async registerWithEmail(email: string, password: string) {
-    try {
-      const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-
-      // Envoyer l'email de vérification avec action code settings
-      if (credential.user) {
-        try {
-          // Obtenir l'URL de base de l'application
-          const actionCodeSettings = {
-            url: window.location.origin + '/home',
-            handleCodeInApp: false,
-          };
-
-          await sendEmailVerification(credential.user, actionCodeSettings);
-          console.log('Email de vérification envoyé avec succès');
-        } catch (emailError: any) {
-          console.error('Erreur lors de l\'envoi de l\'email de vérification:', emailError);
-          // Ne pas bloquer l'inscription si l'email échoue, mais logger l'erreur
-          throw new Error('Erreur lors de l\'envoi de l\'email de vérification: ' + this.handleError(emailError));
-        }
-      }
-
-      this.router.navigate(['/home']);
-      return credential;
-    } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error);
-      throw this.handleError(error);
+  async registerWithEmail(
+    email: string,
+    password: string,
+    extra?: {
+      firstName?: string;
+      lastName?: string;
+      phoneNumber?: string;
     }
+  ) {
+    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+    const user = credential.user;
+
+    if (!user) throw new Error('Utilisateur non créé');
+
+    // 🔹 Update Auth profile
+    await updateProfile(user, {
+      displayName: `${extra?.firstName ?? ''} ${extra?.lastName ?? ''}`.trim()
+    });
+
+    // 🔹 Firestore user document
+    await setDoc(doc(this.firestore, 'users', user.uid), {
+      uid: user.uid,
+      firstName: extra?.firstName ?? '',
+      lastName: extra?.lastName ?? '',
+      email: user.email,
+      phoneNumber: extra?.phoneNumber ?? '',
+      photoURL: user.photoURL ?? '',
+      createdAt: new Date()
+    });
+
+    // 🔹 Email verification
+    await sendEmailVerification(user);
+
+    this.router.navigate(['/home']);
+  }
+
+  async updateProfile(data: {
+    displayName?: string;
+    phoneNumber?: string;
+    photoURL?: string;
+  }) {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+
+    // 1. Mettre à jour le profil Auth (DisplayName, Photo)
+    await updateProfile(user, {
+      displayName: data.displayName,
+      photoURL: data.photoURL,
+    });
+
+    // 2. Mettre à jour le document Firestore (Téléphone, etc.)
+    const userRef = doc(this.firestore, 'users', user.uid);
+    await setDoc(userRef, {
+      firstName: data.displayName?.split(' ')[0] || '',
+      lastName: data.displayName?.split(' ').slice(1).join(' ') || '',
+      phoneNumber: data.phoneNumber || '',
+      photoURL: data.photoURL || null,
+      updatedAt: new Date()
+    }, { merge: true });
+  }
+
+  async getUserDocument(uid: string) {
+    const userRef = doc(this.firestore, 'users', uid);
+    const snap = await getDoc(userRef);
+    return snap.exists() ? snap.data() : null;
   }
 
   async resetPassword(email: string) {
@@ -103,10 +146,29 @@ export class AuthService {
     return this.auth.currentUser?.emailVerified ?? false;
   }
 
-  /**
-   * Vérifie si l'utilisateur doit se reconnecter récemment
-   * @param password Mot de passe de l'utilisateur (optionnel, pour reauthentification)
-   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+    try {
+      const currentUser = this.auth.currentUser;
+
+      if (!currentUser || !currentUser.email) {
+        throw new Error('Aucun utilisateur connecté');
+      }
+
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+
+      await updatePassword(currentUser, newPassword);
+
+      return true;
+    } catch (error: any) {
+      if (error.code === 'auth/multi-factor-auth-required') {
+         throw error;
+      }
+      console.error('Erreur lors du changement de mot de passe:', error);
+      throw this.handleError(error);
+    }
+  }
+
   async ensureRecentLogin(password?: string): Promise<void> {
     const currentUser = this.auth.currentUser;
     if (!currentUser || !currentUser.email) {
@@ -148,6 +210,50 @@ export class AuthService {
       code: 'auth/requires-recent-login',
       message: 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter et vous reconnecter, puis réessayer.'
     };
+
+  }
+
+  async getAvatarFromStorage(uid: string): Promise<string | null> {
+    try {
+      const storage = getStorage();
+      const avatarRef = ref(storage, `users/${uid}/avatar.jpg`);
+      return await getDownloadURL(avatarRef);
+    } catch (e) {
+      console.warn('Avatar introuvable dans Storage:', e);
+      return null;
+    }
+  }
+
+  async uploadAvatar(file: File): Promise<string> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('📤 Upload avatar for:', user.uid);
+
+    const storage = getStorage();
+    const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
+
+    // 1️⃣ Upload
+    await uploadBytes(avatarRef, file);
+    console.log('✅ Upload OK');
+
+    // 2️⃣ URL Firebase
+    const photoURL = await getDownloadURL(avatarRef);
+    console.log('🌍 URL Firebase:', photoURL);
+
+    // 3️⃣ Auth
+    await updateProfile(user, { photoURL });
+    console.log('✅ Auth profile updated');
+
+    // 4️⃣ Firestore
+    await setDoc(
+      doc(this.firestore, 'users', user.uid),
+      { photoURL },
+      { merge: true }
+    );
+    console.log('✅ Firestore updated');
+
+    return photoURL;
   }
 
   async sendMFAVerificationCode(phoneNumber: string, recaptchaContainerId: string = 'recaptcha-container', password?: string): Promise<string> {
@@ -373,22 +479,9 @@ export class AuthService {
   }
 
   async loginWithEmail(email: string, password: string) {
-    try {
-      const credential = await signInWithEmailAndPassword(this.auth, email, password);
-      this.router.navigate(['/home']);
-      return credential;
-    } catch (error: any) {
-      // Vérifier si l'erreur indique qu'un MFA est requis
-      if (error.code === 'auth/multi-factor-auth-required') {
-        // L'erreur contient un resolver MFA
-        throw {
-          code: 'auth/multi-factor-auth-required',
-          resolver: error.resolver,
-          message: 'Authentification à deux facteurs requise'
-        };
-      }
-      throw this.handleError(error);
-    }
+    const credential = await signInWithEmailAndPassword(this.auth, email, password);
+    this.router.navigate(['/home']);
+    return credential;
   }
 
   async resolveMFA(resolver: MultiFactorResolver, verificationId: string, verificationCode: string) {
@@ -486,10 +579,17 @@ export class AuthService {
       }
 
       const session = resolver.session;
-      const phoneInfoOptions = {
-        phoneNumber: phoneNumber,
-        session: session
-      };
+      let phoneInfoOptions: any = { session };
+
+      // Si le numéro contient des étoiles (*), c'est un masque : on utilise l'objet 'hint' de Firebase
+      if (phoneNumber.includes('*')) {
+          // On utilise le premier facteur enregistré par défaut
+          phoneInfoOptions.multiFactorHint = resolver.hints[0];
+          console.log("Utilisation du hint MFA (numéro masqué détecté)");
+      } else {
+          // Sinon, l'utilisateur a tapé un vrai numéro complet
+          phoneInfoOptions.phoneNumber = phoneNumber;
+      }
 
       // Import dynamique de firebase/auth pour accéder à verifyPhoneNumber
       const firebaseAuth = await import('firebase/auth');
@@ -561,16 +661,18 @@ export class AuthService {
 
     const errorCode = (error as any).code;
     switch (errorCode) {
+      case 'auth/invalid-credential':
+      case 'auth/invalid-login-credentials':
+      case 'auth/user-not-found':
+        return 'L’adresse email ou le mot de passe est incorrect.';
+      case 'auth/wrong-password':
+        return 'Le mot de passe actuel est incorrect.';
       case 'auth/email-already-in-use':
         return 'Cet email est déjà utilisé';
       case 'auth/invalid-email':
         return 'Email invalide';
       case 'auth/weak-password':
         return 'Le mot de passe doit contenir au moins 6 caractères';
-      case 'auth/user-not-found':
-        return 'Utilisateur non trouvé';
-      case 'auth/wrong-password':
-        return 'Mot de passe incorrect';
       case 'auth/popup-closed-by-user':
         return 'Connexion annulée';
       case 'auth/too-many-requests':
@@ -606,23 +708,24 @@ export class AuthService {
       case 'auth/captcha-check-failed':
         return 'Échec de la vérification reCAPTCHA. Veuillez réessayer.';
       case 'auth/invalid-app-credential':
-        return 'Erreur de configuration reCAPTCHA Enterprise. Vérifiez que reCAPTCHA SMS defense est correctement configuré dans Firebase Console → Authentication → Paramètres → reCAPTCHA. Assurez-vous que les clés de site sont configurées pour la plateforme Web.';
+        return 'Erreur de configuration reCAPTCHA Enterprise. Vérifiez la configuration dans Firebase Console.';
       case 'auth/app-not-authorized':
         return 'Application non autorisée. Vérifiez la configuration Firebase.';
+      case 'auth/requires-recent-login':
+        return 'Une reconnexion récente est requise. Veuillez saisir votre mot de passe actuel pour confirmer.';
       case 'auth/internal-error':
-        // Vérifier si c'est lié à reCAPTCHA
         const internalErrorMsg = String((error as any).message || '').toLowerCase();
         if (internalErrorMsg.includes('recaptcha') || internalErrorMsg.includes('captcha') || internalErrorMsg.includes('securityerror') || internalErrorMsg.includes('browser_error')) {
           if (internalErrorMsg.includes('localhost') || internalErrorMsg.includes('domain')) {
-            return 'Le domaine localhost n\'est pas autorisé pour reCAPTCHA. Ajoutez "localhost" et "127.0.0.1" aux domaines autorisés dans Google Cloud Console → reCAPTCHA Enterprise → Votre clé de site.';
+            return 'Le domaine localhost n\'est pas autorisé pour reCAPTCHA. Ajoutez "localhost" et "127.0.0.1" aux domaines autorisés.';
           }
           if (internalErrorMsg.includes('securityerror') || internalErrorMsg.includes('blocked a frame')) {
-            return 'Erreur SecurityError reCAPTCHA. Le widget a été supprimé prématurément. Rafraîchissez la page et réessayez.';
+            return 'Erreur reCAPTCHA. Rafraîchissez la page et réessayez.';
           }
           if (internalErrorMsg.includes('browser_error')) {
-            return 'Erreur réseau reCAPTCHA (BROWSER_ERROR). Vérifiez votre connexion internet et réessayez.';
+            return 'Erreur réseau reCAPTCHA. Vérifiez votre connexion internet et réessayez.';
           }
-          return 'Erreur reCAPTCHA. Vérifiez que reCAPTCHA SMS defense est activé et correctement configuré dans Firebase Console.';
+          return 'Erreur reCAPTCHA. Vérifiez la configuration.';
         }
         return 'Erreur interne. Veuillez réessayer ou contacter le support.';
       case 'auth/operation-not-allowed':
@@ -630,13 +733,51 @@ export class AuthService {
         const errorMessage = (error as any).message || '';
         const errorString = String(errorMessage).toLowerCase();
         if (errorString.includes('region') || errorString.includes('région') || errorString.includes('sms unable to be sent') || errorString.includes('region enabled')) {
-          return 'La région SMS pour votre numéro de téléphone n\'est pas activée. Allez dans Firebase Console → Authentication → Paramètres → SMS → Règles pour les SMS par région → Activez la région de votre numéro (ex: France pour +33).';
+          return 'La région SMS pour votre numéro de téléphone n\'est pas activée. Activez la région correspondante dans Firebase Console.';
         }
-        return 'L\'authentification SMS/MFA n\'est pas activée. Vérifiez : 1) Authentication → Méthode de connexion → "Téléphone" activé, 2) Authentication → Paramètres → reCAPTCHA → "reCAPTCHA SMS defense" activé, 3) Authentication → Paramètres → SMS → Règles pour les SMS par région → Région activée.';
-      case 'auth/requires-recent-login':
-        return 'Une reconnexion récente est requise pour activer l\'A2F. Veuillez vous déconnecter, vous reconnecter, puis réessayer d\'activer l\'A2F.';
+        return 'L\'authentification SMS/MFA n\'est pas activée. Vérifiez la configuration Firebase.';
       default:
         return (error as any).message || errorCode || 'Une erreur est survenue';
+    }
+  }
+
+  async deleteAccount(password?: string) {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) throw new Error('Aucun utilisateur connecté');
+
+    try {
+      // Reauth email/password si fourni
+      if (password && currentUser.email) {
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(currentUser, credential);
+      }
+
+      // Supprimer avatar storage (si existe)
+      try {
+        const storage = getStorage();
+        const avatarRef = ref(storage, `users/${currentUser.uid}/avatar.jpg`);
+        await deleteObject(avatarRef);
+      } catch {}
+
+      // Supprimer Firestore doc
+      try {
+        await deleteDoc(doc(this.firestore, 'users', currentUser.uid));
+      } catch {}
+
+      // Supprimer Auth account
+      await deleteUser(currentUser);
+
+      // Redirection
+      await this.router.navigate(['/login']);
+    } catch (err: any) {
+      console.error('deleteAccount error:', err);
+
+      if (err?.code === 'auth/requires-recent-login') {
+        throw 'Une reconnexion récente est requise. Saisis ton mot de passe puis réessaie.';
+      }
+
+      // handleError retourne une string => parfait pour affichage
+      throw this.handleError(err);
     }
   }
 }
