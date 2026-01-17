@@ -9,11 +9,12 @@ import { MatIconModule } from '@angular/material/icon'
 import { effect } from '@angular/core';
 import { Navbar } from '../../components/navbar/navbar';
 import { RouterLink } from '@angular/router';
+import { Footer } from '../../components/footer/footer';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [Navbar,CommonModule, MatIconModule, MatCardModule, MatButtonModule, RouterLink ],
+  imports: [Navbar,CommonModule, Footer, MatIconModule, MatCardModule, MatButtonModule, RouterLink ],
   templateUrl: './history.html',
   styleUrl: './history.css',
 })
