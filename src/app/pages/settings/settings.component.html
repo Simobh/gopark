@@ -1,11 +1,13 @@
+<app-navbar></app-navbar>
+
 <div class="settings-container d-flex align-items-center justify-content-center">
-  <div class="card shadow-lg border-0 overflow-hidden main-card d-flex flex-column">
+  <div class="card shadow-lg border-0 overflow-hidden main-card d-flex flex-column mt-5">
 
     <div class="d-flex h-100">
 
       <div class="sidebar-fixed p-4 d-flex flex-column border-end">
         <div class="d-flex align-items-center mb-4 border-bottom pb-3 border-secondary border-opacity-10">
-          <i class="bi bi-geo-alt-fill fs-4 me-2 text-dark"></i>
+          <i class="bi bi-gear-fill fs-4 me-2 text-dark"></i>
           <h5 class="mb-0 fw-bold">Paramètres</h5>
         </div>
 
@@ -46,7 +48,7 @@
               }
             </h4>
             <div class="d-flex gap-2">
-              <button class="btn btn-primary btn-sm d-flex align-items-center" (click)="goBack()">
+              <button class="btn btn-success btn-sm d-flex align-items-center" (click)="goBack()">
                 <i class="bi bi-house-door-fill me-1"></i> Retour à l'accueil
               </button>
             </div>
@@ -73,7 +75,7 @@
                       <img [src]="avatarPreviewUrl() ? avatarPreviewUrl() : 'assets/images/unknown.jpg'"
                            alt="Profil" class="w-100 h-100 object-fit-cover">
                    </div>
-                   <button type="button" class="btn btn-primary rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center shadow p-0"
+                   <button type="button" class="btn btn-success rounded-circle position-absolute bottom-0 end-0 d-flex align-items-center justify-content-center shadow p-0"
                            style="width: 32px; height: 32px;" (click)="fileInput.click()" [disabled]="!editMode()">
                       <i class="bi bi-camera-fill text-white" style="font-size: 0.8rem;"></i>
                    </button>
@@ -85,7 +87,7 @@
                 </div>
               </div>
 
-              <button class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center"
+              <button class="btn btn-outline-success btn-sm rounded-pill px-3 d-flex align-items-center"
                       (click)="editMode.set(!editMode())">
                  <i class="bi" [class.bi-pencil]="!editMode()" [class.bi-x-lg]="editMode()"></i>
                  <span class="ms-2">{{ editMode() ? 'Annuler' : 'Modifier' }}</span>
@@ -136,7 +138,7 @@
                     }
                   </div>
                   @if (!user.emailVerified) {
-                    <button class="btn btn-outline-primary btn-sm border-0 fw-bold" (click)="onResendVerification()" [disabled]="loading()">
+                    <button class="btn btn-outline-success btn-sm border-0 fw-bold" (click)="onResendVerification()" [disabled]="loading()">
                        <i class="bi bi-envelope me-2"></i> {{ loading() ? 'Envoi...' : 'Envoyer l\'email' }}
                     </button>
                   }
@@ -145,7 +147,7 @@
             </div>
 
             <div class="text-center mt-auto">
-              <button class="btn btn-primary px-5 py-2 fw-bold shadow-sm" [disabled]="!editMode() || loading()" (click)="onSaveProfile()">
+              <button class="btn btn-success px-5 py-2 fw-bold shadow-sm" [disabled]="!editMode() || loading()" (click)="onSaveProfile()">
                  {{ loading() ? 'Enregistrement...' : 'Enregistrer' }}
               </button>
             </div>
@@ -203,7 +205,7 @@
                }
             </div>
 
-            <button class="btn btn-primary mt-3 px-4" (click)="onChangePassword()"
+            <button class="btn btn-success mt-3 px-4" (click)="onChangePassword()"
                     [disabled]="passwordLoading() || !canSubmitPasswordForm()">
                {{ passwordLoading() ? 'Mise à jour...' : 'Mettre à jour' }}
             </button>
@@ -240,7 +242,7 @@
                               [value]="mfaPhoneNumber()" (input)="mfaPhoneNumber.set($any($event.target).value)"
                               [disabled]="mfaLoading()"> <div id="recaptcha-container" class="my-2"></div>
 
-                        <button class="btn btn-primary mt-3" (click)="onSendMFAVerificationCode()"
+                        <button class="btn btn-success mt-3" (click)="onSendMFAVerificationCode()"
                                 [disabled]="mfaLoading() || !mfaPhoneNumber().trim()">
                           {{ mfaLoading() ? 'Envoi du code...' : 'Envoyer le code SMS' }}
                         </button>
@@ -250,7 +252,7 @@
                         <input class="form-control border-0 mb-2 py-2" placeholder="123456"
                               [value]="mfaVerificationCode()" (input)="mfaVerificationCode.set($any($event.target).value)">
                         <div class="d-flex gap-2 mt-3">
-                          <button class="btn btn-primary" (click)="onVerifyMFA()" [disabled]="mfaLoading()">Vérifier</button>
+                          <button class="btn btn-success" (click)="onVerifyMFA()" [disabled]="mfaLoading()">Vérifier</button>
                           <button class="btn btn-outline-secondary" (click)="onCancelMFA()">Annuler</button>
                         </div>
                     }

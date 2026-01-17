@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Firestore, collection, collectionData, query, where } from '@angular/fire/firestore';
 import { Observable, map } from 'rxjs';
+import { Router, RouterModule } from '@angular/router';
 
 
 @Component({
@@ -13,6 +14,7 @@ import { Observable, map } from 'rxjs';
   styleUrl: './navbar.css'
 })
 export class Navbar implements OnInit, OnDestroy {
+  public router = inject(Router);
   activeSection = signal<string>('home');
   private observer?: IntersectionObserver;
   protected authService = inject(AuthService);
@@ -107,7 +109,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   private updateActiveSectionOnScroll() {
     if (!this.isBrowser || typeof window === 'undefined') return;
-    
+
     const sections = ['home', 'about', 'services', 'how', 'contact'];
     const scrollPosition = window.scrollY + 150; // Offset pour la navbar fixe
 
@@ -129,7 +131,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (!this.isBrowser) return;
-    
+
     this.observer?.disconnect();
     if (this.scrollHandler && typeof window !== 'undefined') {
       window.removeEventListener('scroll', this.scrollHandler);

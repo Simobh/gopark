@@ -4,10 +4,11 @@ import { About } from '../about/about';
 import { Services } from '../services/services';
 import { HowItWorks } from '../how-it-works/how-it-works';
 import { Contact } from '../contact/contact';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-landing-page',
-  imports: [Navbar, About, Services, HowItWorks, Contact],
+  imports: [Navbar, About, Services, HowItWorks, Contact, RouterLink],
   templateUrl: './landing-page.html',
   styleUrls: ['./landing-page.css']
 })

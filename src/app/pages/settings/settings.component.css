@@ -43,9 +43,9 @@
 }
 
 .list-group-item.active {
-  background-color: #0d6efd !important;
+  background-color: #28a745 !important;
   color: white !important;
-  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.25);
+  box-shadow: 0 4px 8px rgba(28, 231, 1, 0.25);
 }
 
 .avatar-placeholder {
@@ -55,6 +55,6 @@
 
 .form-control:focus {
   box-shadow: none;
-  border: 1px solid #0d6efd;
+  border: 1px solid #28a745;
   background-color: #fff !important;
 }

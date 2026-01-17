@@ -2,6 +2,7 @@ import { Component, inject, signal, effect, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Location } from '@angular/common';
+import { Navbar } from '../../components/navbar/navbar';
 import { Router } from '@angular/router';
 
 const LS_AVATAR_KEY = 'gopark_avatar_preview';
@@ -12,11 +13,13 @@ declare const bootstrap: any;
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, Navbar],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
 })
 export class SettingsComponent implements OnInit {
+
+  private router = inject(Router);
   authService = inject(AuthService);
   private location = inject(Location);
 
@@ -479,6 +482,6 @@ export class SettingsComponent implements OnInit {
   }
 
   goBack() {
-    this.location.back();
+    this.router.navigate(['/home']);
   }
 }
