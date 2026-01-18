@@ -1,8 +1,19 @@
 .get-in-touch-link {
-  color: #d6d6d6 !important;
+  color: #3f3b3b !important;
   text-decoration: underline !important;
+  display: inline-block;     /* important */
+  margin-bottom: 24px;       /* ✅ espace après */
 }
 
+
 .get-in-touch-link:hover {
-  color: #495057 !important;
+  color: #239a2d !important;
+}
+
+.propos-image {
+  max-width: 600px;
+  width: 100%;
+  height: auto;          /* ✅ */
+  display: block;
+  margin: 0 auto;
 }

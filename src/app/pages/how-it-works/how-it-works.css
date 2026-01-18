@@ -1,7 +1,9 @@
 .step-image {
-  max-height: 370px;
   width: 100%;
-  object-fit: cover;
+  height: auto;              /* ✅ garde le bon ratio */
+  max-height: 420px;         /* limite élégante sur desktop */
+  object-fit: contain;       /* ❗ pas de découpe */
+  background-color: #f8f9fa; /* fond clair si bandes */
 }
 
 .step-title {
