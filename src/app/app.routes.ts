@@ -43,6 +43,15 @@ export const routes: Routes = [
       import('./pages/history/history').then(m => m.HistoryComponent),
     canActivate: [authGuard],
   },
+
+  {
+    path: 'reservations',
+    loadComponent: () =>
+      import('./pages/reservations/reservations.component')
+        .then(m => m.ReservationsComponent),
+    canActivate: [authGuard],
+  },
+
   {
     path: 'admin/notifications',
     loadComponent: () =>

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Parking } from '../../models/parking.model';
+import { EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-map',
@@ -216,9 +217,19 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  @Output() routeCalculated = new EventEmitter<any>();
+  private userMarker: any;
+
   // API Directions Mapbox pour le tracé
   async getRoute(start: [number, number], end: [number, number]) {
     try {
+      // 2. Gestion du marqueur rouge sur la position de départ
+      if (this.userMarker) this.userMarker.remove();
+      this.userMarker = new this.mapboxgl.Marker({ color: 'red' })
+        .setLngLat(start)
+        .setPopup(new this.mapboxgl.Popup().setHTML('<strong>Position de votre départ</strong>'))
+        .addTo(this.map);
+
       const query = await fetch(
         `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.mapboxToken}`,
         { method: 'GET' }
@@ -226,6 +237,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       const json = await query.json();
       const data = json.routes[0];
       const route = data.geometry.coordinates;
+
+      // Émettre les infos vers le parent
+      this.routeCalculated.emit({
+        distance: (data.distance / 1000).toFixed(1), // km
+        duration: Math.round(data.duration / 60)    // minutes
+      });
 
       const geojson = {
         type: 'Feature',
@@ -241,7 +258,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
           type: 'line',
           source: { type: 'geojson', data: geojson },
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 'line-color': '#3887be', 'line-width': 5, 'line-opacity': 0.75 }
+          paint: { 'line-color': '#fd0101', 'line-width': 9, 'line-opacity': 1 }
         });
       }
 
@@ -255,10 +272,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private removeRoute(): void {
+  public removeRoute(): void {
     if (this.map?.getLayer('route')) {
       this.map.removeLayer('route');
       this.map.removeSource('route');
+    }
+    if (this.userMarker) {
+      this.userMarker.remove();
+      this.userMarker = null;
     }
   }
 

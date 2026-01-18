@@ -33,6 +33,7 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   user_favoris: any[] = [];
   userId: string | null = null;
   private favSubscription?: Subscription;
+  routeInfo: { distance: string; duration: number } | null = null;
 
   availableCities = [
     { id: 'paris', name: 'Paris' },
@@ -233,6 +234,18 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.suggestions = [];
     this.coords = suggestion.coords;
     this.searchAddress();
+  }
+
+  handleRoute(info: any) {
+    this.routeInfo = info;
+    this.cdr.detectChanges();
+  }
+
+  clearRoute() {
+    this.routeInfo = null;
+    if (this.mapComp) {
+      this.mapComp.removeRoute();
+    }
   }
 
 }
