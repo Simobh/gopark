@@ -1,17 +1,32 @@
-import { Component, OnInit, OnDestroy, effect, ChangeDetectorRef, ViewChild, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  effect,
+  ChangeDetectorRef,
+  ViewChild,
+  AfterViewInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ParkingService } from '../../services/api.service';
 import { GeocodingService } from '../../services/geocoding.service';
+import { AddressService } from '../../services/address.service';
 import { City } from '../../models/city.model';
 import { MapComponent } from '../map/map';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
-import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay, take } from 'rxjs';
+import {
+  Observable,
+  BehaviorSubject,
+  Subscription,
+  switchMap,
+  tap,
+  shareReplay,
+  take
+} from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { time } from 'console';
-
 
 @Component({
   selector: 'app-parkings',
@@ -21,152 +36,148 @@ import { time } from 'console';
 })
 export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
 
-    @ViewChild(MapComponent) mapComp!: MapComponent;
+  @ViewChild(MapComponent) mapComp!: MapComponent;
 
-    isLoading = false;
-    address = '';
-    coords: { lat: number; lon: number } | null = null;
-    isListVisible = true;
-    selectedCity$ = new BehaviorSubject<string>('all'); 
-    
-    parkings$!: Observable<any[]>;
-    user_favoris: any[] = [];
-    userId: string | null = null;
-    private favSubscription?: Subscription;
+  isLoading = false;
+  address = '';
+  coords: { lat: number; lon: number } | null = null;
 
-    availableCities = [
-      { id: 'paris', name: 'Paris' },
-      { id: 'strasbourg', name: 'Strasbourg' },
-      { id: 'toulouse', name: 'Toulouse' }
-    ];
+  addressSuggestions: any[] = [];
+  isSearchingAddress = false;
 
-    constructor(
-      private parkingService: ParkingService, 
-      private geocodingService: GeocodingService,
-      public authService: AuthService,
-      private favoritesService: FavoritesService,
-      private historyService: HistoryService,
-      private cdr: ChangeDetectorRef,
-      private route: ActivatedRoute
-    ) {
-      effect(() => {
-        const user = this.authService.currentUser();
-        if (user) {
-          this.userId = user.uid;
-          this.favSubscription?.unsubscribe();
-          this.favSubscription = this.favoritesService.getFavorites(user.uid).subscribe(favs => {
+  selectedCity$ = new BehaviorSubject<string>('all');
+  parkings$!: Observable<any[]>;
+
+  user_favoris: any[] = [];
+  userId: string | null = null;
+  private favSubscription?: Subscription;
+
+  availableCities = [
+    { id: 'paris', name: 'Paris' },
+    { id: 'strasbourg', name: 'Strasbourg' },
+    { id: 'toulouse', name: 'Toulouse' }
+  ];
+
+  constructor(
+    private parkingService: ParkingService,
+    private geocodingService: GeocodingService,
+    private addressService: AddressService,
+    public authService: AuthService,
+    private favoritesService: FavoritesService,
+    private historyService: HistoryService,
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
+  ) {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        this.userId = user.uid;
+        this.favSubscription?.unsubscribe();
+        this.favSubscription = this.favoritesService
+          .getFavorites(user.uid)
+          .subscribe(favs => {
             this.user_favoris = favs;
             this.cdr.detectChanges();
           });
-        } else {
-          this.userId = null;
-          this.user_favoris = [];
-          this.favSubscription?.unsubscribe();
-        }
-      });
-    }
-
-    ngOnInit(): void {
-      this.parkings$ = this.selectedCity$.pipe(
-        tap(() => this.isLoading = true),
-        switchMap(city => this.parkingService.getParkingsByCity(city as City)),
-        tap(() => this.isLoading = false),
-        shareReplay(1)
-      );
-    }
-
-    ngOnDestroy(): void {
-      this.favSubscription?.unsubscribe();
-    }
-
-    onCityChange(newCity: string) {
-      this.selectedCity$.next(newCity);
-    }
-
-    searchAddress() {
-      if (!this.address.trim()) {
-        this.coords = null;
-        return;
-      }
-      this.geocodingService.getCoordinates(this.address).subscribe({
-        next: (result) => this.coords = result,
-        error: (err) => {
-          console.error('Erreur géocodage :', err);
-          this.coords = null;
-        }
-      });
-    }
-
-    focusOnParking(parking: any) {
-      if (this.mapComp && parking.position && parking.position.lat && parking.position.lon) {
-        console.log('jjj', this.mapComp);
-        this.mapComp.zoomToParking(parking.position.lat, parking.position.lon);
-      }
-      this.addHistory(parking);
-    }
-
-    displayLocation(lat: any, lon: any) {
-      console.log('jjj', this.mapComp);
-      if (this.mapComp && lat && lon) {
-        this.mapComp.zoomToParking(lat, lon);
-      }
-    }
-
-    addHistory(parking: any) {
-      if (!this.userId) return;
-      this.historyService.getHistory(this.userId).pipe(take(1)).subscribe(list => {
-        const dupe = list.find(item => item.parking.id === parking.id);
-
-        if (dupe) {
-          this.historyService.updateHistoryDate(dupe.firebaseId).catch(err => console.error('Erreur mise à jour historique :', err));
-        } else {
-          this.historyService.addHistory(this.userId!, parking).catch(err => console.error('Erreur ajout historique :', err));
-        }
-      });
-    }
-
-    isFavorite(parkingId: string): any {
-      return this.user_favoris.find(f => f.parking && f.parking.id === parkingId);
-    }
-
-    toggleFavorite(parking: any) {
-      if (!this.userId) {
-        alert("Veuillez vous connecter pour gérer vos favoris.");
-        return;
-      }
-      const favoriteDoc = this.isFavorite(parking.id);
-      if (favoriteDoc) {
-        this.favoritesService.removeFavorite(favoriteDoc.firebaseId)
-          .catch(err => console.error('Erreur suppression:', err));
       } else {
-        this.favoritesService.addFavorite(this.userId, parking)
-          .catch(err => console.error('Erreur ajout:', err));
+        this.userId = null;
+        this.user_favoris = [];
+        this.favSubscription?.unsubscribe();
       }
+    });
+  }
+
+  ngOnInit(): void {
+    this.parkings$ = this.selectedCity$.pipe(
+      tap(() => (this.isLoading = true)),
+      switchMap(city => this.parkingService.getParkingsByCity(city as City)),
+      tap(() => (this.isLoading = false)),
+      shareReplay(1)
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.favSubscription?.unsubscribe();
+  }
+
+  onCityChange(city: string) {
+    this.selectedCity$.next(city);
+  }
+
+  // 🔥 AUTOCOMPLETE MAPBOX
+  onAddressInput() {
+    const query = this.address.trim();
+
+    if (query.length < 3) {
+      this.addressSuggestions = [];
+      return;
     }
 
-    ngAfterViewInit(): void {
-      this.route.queryParams.subscribe(params => {
-        // Vérification dans la console
-        console.log('Paramètres reçus :', params);
+    this.addressService.searchAddress(query).subscribe({
+      next: results => this.addressSuggestions = results,
+      error: () => this.addressSuggestions = []
+    });
+  }
 
-        const lat = parseFloat(params['lat']);
-        const lon = parseFloat(params['lon']);
+  selectAddressSuggestion(s: any) {
+    this.address = s.place_name;
+    this.addressSuggestions = [];
 
-        if (!isNaN(lat) && !isNaN(lon)) {
-          console.log(`Tentative de zoom sur : ${lat}, ${lon}`);
-          
-          // On utilise un délai pour laisser le temps au moteur de rendu
-          setTimeout(() => {
-            if (this.mapComp) {
-              console.log('MapComponent trouvé, appel de zoomToParking', this.mapComp);
-              this.displayLocation(lat, lon);
-            } else {
-              console.error('MapComponent est toujours indéfini (@ViewChild a échoué)');
-            }
-          }, 10000); // Augmenté légèrement pour le test
-        } else {
-          console.warn('Coordonnées lat/lon invalides ou absentes de l\'URL');
-        }
-      });
+    this.coords = {
+      lon: s.center[0],
+      lat: s.center[1]
+    };
+  }
+
+  searchAddress() {
+    if (!this.address.trim()) return;
+
+    this.geocodingService.getCoordinates(this.address).subscribe({
+      next: result => (this.coords = result),
+      error: () => (this.coords = null)
+    });
+  }
+
+  focusOnParking(parking: any) {
+    if (this.mapComp?.zoomToParking && parking?.position) {
+      this.mapComp.zoomToParking(parking.position.lat, parking.position.lon);
     }
+    this.addHistory(parking);
+  }
+
+  addHistory(parking: any) {
+    if (!this.userId) return;
+    this.historyService.getHistory(this.userId).pipe(take(1)).subscribe(list => {
+      const exists = list.find(h => h.parking.id === parking.id);
+      if (exists) {
+        this.historyService.updateHistoryDate(exists.firebaseId);
+      } else {
+        this.historyService.addHistory(this.userId!, parking);
+      }
+    });
+  }
+
+  isFavorite(id: string) {
+    return this.user_favoris.find(f => f.parking?.id === id);
+  }
+
+  toggleFavorite(parking: any) {
+    if (!this.userId) return alert('Veuillez vous connecter');
+    const fav = this.isFavorite(parking.id);
+    fav
+      ? this.favoritesService.removeFavorite(fav.firebaseId)
+      : this.favoritesService.addFavorite(this.userId, parking);
+  }
+
+  ngAfterViewInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const lat = +params['lat'];
+      const lon = +params['lon'];
+      if (!isNaN(lat) && !isNaN(lon)) {
+        setTimeout(() => {
+          this.mapComp?.zoomToParking(lat, lon);
+        }, 800);
+      }
+    });
+  }
 }

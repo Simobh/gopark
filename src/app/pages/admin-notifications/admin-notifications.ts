@@ -13,6 +13,7 @@ import { Observable } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { Navbar } from '../../components/navbar/navbar';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { Footer } from "../../components/footer/footer";
 
 interface ContactMessage {
   id: string;
@@ -22,21 +23,28 @@ interface ContactMessage {
   phone?: string;
   createdAt: any;
   read: boolean;
+  starred?: boolean;
 }
 
 @Component({
   selector: 'app-admin-notifications',
   standalone: true,
-  imports: [CommonModule, MatIconModule, Navbar],
+  imports: [CommonModule, MatIconModule, Navbar, Footer],
   templateUrl: './admin-notifications.html',
   animations: [
     trigger('slideFade', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(-12px)' }),
-        animate('280ms cubic-bezier(.4,0,.2,1)', style({ opacity: 1, transform: 'translateY(0)' }))
+        animate(
+          '280ms cubic-bezier(.4,0,.2,1)',
+          style({ opacity: 1, transform: 'translateY(0)' })
+        )
       ]),
       transition(':leave', [
-        animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(12px)' }))
+        animate(
+          '200ms ease-in',
+          style({ opacity: 0, transform: 'translateY(12px)' })
+        )
       ])
     ])
   ]
@@ -77,4 +85,21 @@ export class AdminNotifications {
     const ref = doc(this.firestore, `contactMessages/${id}`);
     updateDoc(ref, { read: true });
   }
+
+  copyEmail(email: string) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(email);
+  } else {
+    const textarea = document.createElement('textarea');
+    textarea.value = email;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+}
+
 }
