@@ -226,34 +226,14 @@ export class AuthService {
 
   async uploadAvatar(file: File): Promise<string> {
     const user = this.auth.currentUser;
-    if (!user) throw new Error('Not authenticated');
-
-    console.log('📤 Upload avatar for:', user.uid);
+    if (!user) throw new Error('Non connecté');
 
     const storage = getStorage();
+    // On écrase toujours le même fichier
     const avatarRef = ref(storage, `users/${user.uid}/avatar.jpg`);
 
-    // 1️⃣ Upload
     await uploadBytes(avatarRef, file);
-    console.log('✅ Upload OK');
-
-    // 2️⃣ URL Firebase
-    const photoURL = await getDownloadURL(avatarRef);
-    console.log('🌍 URL Firebase:', photoURL);
-
-    // 3️⃣ Auth
-    await updateProfile(user, { photoURL });
-    console.log('✅ Auth profile updated');
-
-    // 4️⃣ Firestore
-    await setDoc(
-      doc(this.firestore, 'users', user.uid),
-      { photoURL },
-      { merge: true }
-    );
-    console.log('✅ Firestore updated');
-
-    return photoURL;
+    return await getDownloadURL(avatarRef);
   }
 
   async sendMFAVerificationCode(phoneNumber: string, recaptchaContainerId: string = 'recaptcha-container', password?: string): Promise<string> {
@@ -639,6 +619,9 @@ export class AuthService {
 
   async logout() {
     try {
+      localStorage.removeItem('gopark_avatar_preview');
+      localStorage.removeItem('gopark_first_name');
+      localStorage.removeItem('gopark_last_name');
       await signOut(this.auth);
       this.router.navigate(['/login']);
     } catch (error: any) {
