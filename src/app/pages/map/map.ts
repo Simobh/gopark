@@ -104,7 +104,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
       this.stopRotation();
 
-      // 2. Voler vers le parking avec inclinaison et gros zoom
       this.map.flyTo({
         center: [lon, lat],
         zoom: 18,           // Zoom plus puissant
@@ -125,7 +124,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private startRotation() {
     const rotate = () => {
       if (this.map) {
-        // 0.2 est la vitesse, tu peux l'augmenter pour tourner plus vite
         this.map.setBearing(this.map.getBearing() + 0.2);
         this.rotationAnimation = requestAnimationFrame(rotate);
       }
@@ -187,7 +185,19 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         if (this._userCoords) {
           this.getRoute([this._userCoords.lon, this._userCoords.lat], [p.position.lon, p.position.lat]);
         } else {
-          alert("Veuillez d'abord entrer votre adresse de départ.");
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const userPos: [number, number] = [position.coords.longitude, position.coords.latitude];
+                this.getRoute(userPos, [p.position.lon, p.position.lat]);
+              },
+              (error) => {
+                console.error("Erreur de géolocalisation", error);
+              }
+            );
+          } else {
+            alert("La géolocalisation n'est pas supportée par votre navigateur.");
+          }
         }
       });
 
