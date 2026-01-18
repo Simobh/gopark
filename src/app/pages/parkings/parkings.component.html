@@ -128,12 +128,32 @@
   </div>
 
   <ng-container *ngIf="parkings$ | async as parkingsList; else loadingOrEmpty">
-    <div *ngIf="!isLoading; else loadingSpinner" class="h-100">
-      <app-map [parkings]="parkingsList" [userCoords]="coords"></app-map>
-    </div>
-  </ng-container>
+  <div *ngIf="!isLoading; else loadingSpinner" class="h-100 position-relative">
+    
+    <app-map 
+      [parkings]="parkingsList" 
+      [userCoords]="coords"
+      (routeCalculated)="handleRoute($event)">
+    </app-map>
 
-</div>
+    <div *ngIf="routeInfo" class="position-absolute ms-4 shadow-lg bg-white p-3 rounded-4 d-flex align-items-center" 
+         style="z-index: 1100; top: 120px; min-width: 25%; border: 2px solid #0d6efd;">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center mb-1">
+          <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+          <span class="fw-bold text-dark">Distance du trajet : {{ routeInfo.distance }} km</span>
+        </div>
+        <div class="d-flex align-items-center text-muted small">
+          <i class="bi bi-clock-history me-2"></i>
+          <span>Environ {{ routeInfo.duration }} min</span>
+        </div>
+      </div>
+      <button class="btn btn-outline-danger btn-sm rounded-circle ms-3" (click)="clearRoute()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+</ng-container>
 
 <ng-template #loadingOrEmpty>
   <div class="d-flex flex-column align-items-center justify-content-center h-100">
