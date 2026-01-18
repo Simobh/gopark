@@ -150,7 +150,8 @@
     <app-map
       [parkings]="parkingsList"
       [userCoords]="coords"
-      (routeCalculated)="handleRoute($event)">
+      (routeCalculated)="handleRoute($event)"
+      (reserveClicked)="openReservation($event)">
     </app-map>
 
     <div *ngIf="routeInfo" class="position-absolute ms-4 shadow-lg bg-white p-3 rounded-4 d-flex align-items-center"
