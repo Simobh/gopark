@@ -10,6 +10,8 @@ import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
 import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import Swal from 'sweetalert2';
+
 
 @Component({
   selector: 'app-parkings',
@@ -125,18 +127,70 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.user_favoris.find(f => f.parking && f.parking.id === parkingId);
   }
 
-  toggleFavorite(parking: any) {
-    if (!this.userId) {
-      alert("Veuillez vous connecter pour gérer vos favoris.");
-      return;
-    }
+ toggleFavorite(parking: any) {
+        if (!this.userId) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Connexion requise',
+            text: 'Veuillez vous connecter pour gérer vos favoris.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+          return;
+        }
+
     const favoriteDoc = this.isFavorite(parking.id);
+
+    //  Suppression des favoris
     if (favoriteDoc) {
       this.favoritesService.removeFavorite(favoriteDoc.firebaseId)
-        .catch(err => console.error('Erreur suppression:', err));
+        .then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Favori supprimé',
+            text: 'Ce parking a été retiré de vos favoris.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error('Erreur suppression:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Impossible de supprimer ce favori.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        });
+
+    // Ajout aux favoris
     } else {
       this.favoritesService.addFavorite(this.userId, parking)
-        .catch(err => console.error('Erreur ajout:', err));
+        .then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Ajouté aux favoris',
+            text: 'Ce parking a été ajouté à vos favoris.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error('Erreur ajout:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Impossible d’ajouter ce parking aux favoris.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        });
     }
   }
 
