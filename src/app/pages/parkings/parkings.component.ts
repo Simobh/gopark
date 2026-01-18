@@ -34,6 +34,7 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   userId: string | null = null;
   private favSubscription?: Subscription;
   routeInfo: { distance: string; duration: number } | null = null;
+  hide_parking_list = false;
 
   availableCities = [
     { id: 'paris', name: 'Paris' },
@@ -246,6 +247,10 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.mapComp) {
       this.mapComp.removeRoute();
     }
+  }
+
+  toggleParkingList() {
+    this.hide_parking_list = !this.hide_parking_list;
   }
 
 }
