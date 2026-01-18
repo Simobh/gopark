@@ -1,5 +1,5 @@
 <div class="container-fluid p-0 vh-100 position-relative overflow-hidden">
-  
+
   <div class="position-absolute top-0 start-50 translate-middle-x mt-2 mt-md-1 px-md-0 col-12 col-md-9" style="z-index: 1050;">
     <div class="card shadow border-0 mx-1 mx-md-0 bg-white">
       <div class="card-body p-1">
@@ -16,18 +16,18 @@
             </select>
           </div>
           <div class="col-8 col-md-6 position-relative">
-            <input 
-              type="text" 
-              class="form-control border-0 bg-light" 
-              placeholder="Adresse..." 
-              [(ngModel)]="address" 
+            <input
+              type="text"
+              class="form-control border-0 bg-light"
+              placeholder="Adresse..."
+              [(ngModel)]="address"
               (input)="onAddressInput()"
               (keyup.enter)="searchAddress()">
-            
+
             <ul class="list-group position-absolute w-100 shadow-sm" style="z-index: 2000;" *ngIf="suggestions.length > 0">
-              <li 
-                class="list-group-item list-group-item-action cursor-pointer" 
-                *ngFor="let s of suggestions" 
+              <li
+                class="list-group-item list-group-item-action cursor-pointer"
+                *ngFor="let s of suggestions"
                 (click)="selectSuggestion(s)">
                 <small>{{ s.fullAddress }}</small>
               </li>
@@ -80,7 +80,13 @@
                   </span>
                   <span class="badge p-2" [ngClass]="p.status == 'Ouvert' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
                 </div>
-                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
+                <button class="btn btn-sm fw-bold fs-4"
+                        (click)="openReservation(p)"
+                        [disabled]="(p.availablePlaces || 0) <= 0"
+                        title="Réserver une place">
+                  <i class="bi bi-ticket-perforated"
+                    [ngClass]="(p.availablePlaces || 0) > 0 ? 'text-primary' : 'text-secondary'"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -123,7 +129,13 @@
                   </span>
                   <span class="badge p-2" [ngClass]="p.status == 'Ouvert' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
                 </div>
-                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
+                <button class="btn btn-sm fw-bold fs-4"
+                        (click)="openReservation(p)"
+                        [disabled]="(p.availablePlaces || 0) <= 0"
+                        title="Réserver une place">
+                  <i class="bi bi-ticket-perforated"
+                    [ngClass]="(p.availablePlaces || 0) > 0 ? 'text-primary' : 'text-secondary'"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -134,14 +146,14 @@
 
   <ng-container *ngIf="parkings$ | async as parkingsList; else loadingOrEmpty">
   <div *ngIf="!isLoading; else loadingSpinner" class="h-100 position-relative">
-    
-    <app-map 
-      [parkings]="parkingsList" 
+
+    <app-map
+      [parkings]="parkingsList"
       [userCoords]="coords"
       (routeCalculated)="handleRoute($event)">
     </app-map>
 
-    <div *ngIf="routeInfo" class="position-absolute ms-4 shadow-lg bg-white p-3 rounded-4 d-flex align-items-center" 
+    <div *ngIf="routeInfo" class="position-absolute ms-4 shadow-lg bg-white p-3 rounded-4 d-flex align-items-center"
          style="z-index: 1100; top: 120px; min-width: 25%; border: 2px solid #0d6efd;">
       <div class="flex-grow-1">
         <div class="d-flex align-items-center mb-1">
@@ -173,3 +185,64 @@
     <span>Mise à jour...</span>
   </div>
 </ng-template>
+
+<div class="modal" tabindex="-1" [ngClass]="{'d-block show': showReservationModal}" style="background-color: rgba(0,0,0,0.5); z-index: 1055;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-calendar-check me-2"></i>Réserver une place
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeReservation()"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="alert alert-light border border-primary border-start-4 mb-3" *ngIf="selectedParking">
+          <strong>{{ selectedParking.name }}</strong><br>
+          <small class="text-muted">{{ selectedParking.city }}</small>
+        </div>
+
+        <form (ngSubmit)="confirmReservation()">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control bg-light border-0" [(ngModel)]="bookingForm.date" name="bookDate">
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">Arrivée <span class="text-danger">*</span></label>
+              <input type="time" class="form-control bg-light border-0" [(ngModel)]="bookingForm.arrival" name="bookArrival">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold small text-muted">Départ <span class="text-danger">*</span></label>
+              <input type="time" class="form-control bg-light border-0" [(ngModel)]="bookingForm.departure" name="bookDeparture">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">Immatriculation <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text border-0 bg-secondary text-white"><i class="bi bi-car-front-fill"></i></span>
+              <input type="text"
+                     class="form-control bg-light border-0 fw-bold"
+                     placeholder="AB-123-CD"
+                     [(ngModel)]="bookingForm.plate"
+                     name="bookPlate"
+                     style="text-transform: uppercase;">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-light text-muted fw-bold me-2" (click)="closeReservation()">Annuler</button>
+            <button type="submit" class="btn btn-success fw-bold px-4" [disabled]="isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isLoading ? 'Validation...' : 'Confirmer la réservation' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -10,6 +10,7 @@ import { FavoritesService } from '../../services/favorites.service';
 import { HistoryService } from '../../services/history.service';
 import { Observable, BehaviorSubject, Subscription, switchMap, tap, shareReplay, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { ReservationService } from '../../services/reservation.service';
 import Swal from 'sweetalert2';
 
 
@@ -27,7 +28,7 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   address = '';
   coords: { lat: number; lon: number } | null = null;
   isListVisible = true;
-  selectedCity$ = new BehaviorSubject<string>('all'); 
+  selectedCity$ = new BehaviorSubject<string>('all');
   suggestions: any[] = [];
   parkings$!: Observable<any[]>;
   user_favoris: any[] = [];
@@ -36,6 +37,16 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   routeInfo: { distance: string; duration: number } | null = null;
   hide_parking_list = false;
 
+
+  showReservationModal = false;
+  selectedParking: any = null;
+  bookingForm = {
+    date: new Date().toISOString().split('T')[0], // Date du jour
+    arrival: '',
+    departure: '',
+    plate: ''
+  };
+
   availableCities = [
     { id: 'paris', name: 'Paris' },
     { id: 'strasbourg', name: 'Strasbourg' },
@@ -43,8 +54,9 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   ];
 
   constructor(
-    private parkingService: ParkingService, 
+    private parkingService: ParkingService,
     private geocodingService: GeocodingService,
+    private reservationService: ReservationService,
     public authService: AuthService,
     private favoritesService: FavoritesService,
     private historyService: HistoryService,
@@ -205,7 +217,7 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (!isNaN(lat) && !isNaN(lon)) {
         console.log(`Tentative de zoom sur : ${lat}, ${lon}`);
-        
+
         setTimeout(() => {
           if (this.mapComp) {
             console.log('MapComponent trouvé, appel de zoomToParking', this.mapComp);
@@ -251,6 +263,74 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   toggleParkingList() {
     this.hide_parking_list = !this.hide_parking_list;
+  }
+  openReservation(parking: any) {
+    if (!this.userId) {
+      Swal.fire('Oups', 'Connectez-vous pour réserver une place.', 'info');
+      return;
+    }
+
+    // Sécurité visuelle si places à 0
+    if ((parking.availablePlaces || 0) <= 0) {
+      Swal.fire('Complet', 'Ce parking n\'a plus de places disponibles.', 'warning');
+      return;
+    }
+
+    this.selectedParking = parking;
+    this.showReservationModal = true;
+  }
+
+  closeReservation() {
+    this.showReservationModal = false;
+    this.selectedParking = null;
+    this.bookingForm = {
+      date: new Date().toISOString().split('T')[0],
+      arrival: '',
+      departure: '',
+      plate: ''
+    };
+  }
+
+  // 3. Valide la réservation via le Service
+  async confirmReservation() {
+    // Vérification simple
+    if (!this.bookingForm.arrival || !this.bookingForm.departure || !this.bookingForm.plate) {
+      Swal.fire('Champs manquants', 'Merci de remplir tous les champs.', 'error');
+      return;
+    }
+
+    this.isLoading = true;
+
+    try {
+      // Appel du nouveau service
+      await this.reservationService.createReservation(
+        this.userId!,
+        this.selectedParking,
+        this.bookingForm
+      );
+
+      // Mise à jour visuelle immédiate (UX)
+      // On le fait manuellement car l'observable de l'API ne se mettra pas à jour tout seul
+      if (this.selectedParking.availablePlaces) {
+        this.selectedParking.availablePlaces--;
+      }
+
+      this.isLoading = false;
+      this.closeReservation();
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Place réservée !',
+        text: 'Retrouvez votre ticket dans votre historique.',
+        timer: 3000,
+        showConfirmButton: false
+      });
+
+    } catch (error) {
+      console.error(error);
+      this.isLoading = false;
+      Swal.fire('Erreur', 'Impossible de confirmer la réservation.', 'error');
+    }
   }
 
 }
