@@ -10,6 +10,8 @@ import { effect } from '@angular/core';
 import { Navbar } from '../../components/navbar/navbar';
 import { RouterLink } from '@angular/router';
 import { Footer } from '../../components/footer/footer';
+import Swal from 'sweetalert2';
+
 
 @Component({
   selector: 'app-history',
@@ -60,22 +62,100 @@ export class HistoryComponent implements OnInit {
   }
 
   removeHistoryItem(id: string) {
-    if (!id) return;
-    
-    this.historyService.removeHistory(id).then(() => {
-      console.log('Item supprimé');
-    }).catch(err => console.error("Erreur suppression:", err));
-  }
+  if (!id) return;
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'Supprimer cet élément ?',
+    text: 'Êtes-vous sûr de vouloir supprimer cet élément de votre historique ?',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, supprimer',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d'
+  }).then(result => {
+
+    if (result.isConfirmed) {
+      this.historyService.removeHistory(id)
+        .then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Supprimé',
+            text: 'L’élément a été supprimé de votre historique.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error("Erreur suppression:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Une erreur est survenue lors de la suppression.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        });
+    }
+
+  });
+}
+
 
   clearAllHistory() {
-    const user = this.authService.currentUser();
-    if (!user) return;
-
-    if (confirm("Voulez-vous vraiment effacer tout votre historique ?")) {
-      this.historyService.clearUserHistory(user.uid)
-        .then(() => console.log('Historique vidé'))
-        .catch(err => console.error("Erreur:", err));
-    }
+  const user = this.authService.currentUser();
+  if (!user) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Connexion requise',
+      text: 'Veuillez vous connecter pour gérer votre historique.',
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    });
+    return;
   }
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'Effacer tout l’historique ?',
+    text: 'Cette action est irréversible. Voulez-vous vraiment supprimer tout votre historique ?',
+    showCancelButton: true,
+    confirmButtonText: 'Oui, tout effacer',
+    cancelButtonText: 'Annuler',
+    confirmButtonColor: '#dc3545',
+    cancelButtonColor: '#6c757d'
+  }).then(result => {
+
+    if (result.isConfirmed) {
+      this.historyService.clearUserHistory(user.uid)
+        .then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Historique effacé',
+            text: 'Votre historique a été entièrement supprimé.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error("Erreur:", err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Impossible d’effacer l’historique.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          });
+        });
+    }
+
+  });
+}
+
 
 }

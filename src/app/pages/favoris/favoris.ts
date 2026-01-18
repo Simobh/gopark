@@ -11,6 +11,7 @@ import { Navbar } from '../../components/navbar/navbar';
 import { RouterLink } from '@angular/router';
 import { Footer } from '../../components/footer/footer';
 import { map } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-favoris',
@@ -18,6 +19,7 @@ import { map } from 'rxjs/operators';
   templateUrl: './favoris.html',
   styleUrl: './favoris.css',
 })
+
 export class FavorisComponent implements OnInit {
   FavorisItems$: Observable<any[]> = of([]);
   constructor(
@@ -31,13 +33,11 @@ export class FavorisComponent implements OnInit {
       }
     });
   }
-
    formatDate(timestamp: any): Date {
     return timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
   }
-
+  
   ngOnInit(): void {}
-
   ngAfterViewInit(): void {
     const observer = new IntersectionObserver(
       entries => {
@@ -50,20 +50,62 @@ export class FavorisComponent implements OnInit {
       },
       { threshold: 0.15 }
     );
-
     document
       .querySelectorAll('.fade-section')
       .forEach(el => observer.observe(el));
   }
+    removeFavorite(favoriteId: any) {
+  const user = this.authService.currentUser();
 
-  removeFavorite(favoriteId: any) {
-    const user = this.authService.currentUser();
     if (!user) {
-      alert("Veuillez vous connecter pour gérer vos favoris.");
+      Swal.fire({
+        icon: 'info',
+        title: 'Connexion requise',
+        text: 'Veuillez vous connecter pour gérer vos favoris.',
+        timer: 4000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
       return;
     }
-      this.favoritesService.removeFavorite(favoriteId)
-        .catch(err => console.error('Erreur suppression:', err));
-  }
 
+  
+      Swal.fire({
+        icon: 'warning',
+        title: 'Supprimer ce favoris ?',
+        text: 'Êtes-vous sûr de vouloir supprimer ce parking de vos favoris ?',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d'
+      }).then((result) => {
+
+      if (result.isConfirmed) {
+        this.favoritesService.removeFavorite(favoriteId)
+          .then(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Favori supprimé',
+              text: 'Le parking a été retiré de vos favoris.',
+              timer: 4000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            });
+          })
+          .catch(err => {
+            console.error('Erreur suppression:', err);
+            Swal.fire({
+              icon: 'error',
+              title: 'Erreur',
+              text: 'Une erreur est survenue lors de la suppression.',
+              timer: 4000,
+              timerProgressBar: true,
+              showConfirmButton: false
+            });
+          });
+      }
+
+    });
+  }
 }

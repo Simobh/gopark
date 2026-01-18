@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { FormBuilder,ReactiveFormsModule,Validators } from '@angular/forms';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
+import Swal from 'sweetalert2';
+
 
 @Component({
   selector: 'app-contact',
@@ -39,11 +41,28 @@ export class Contact { contactForm: any;
         read: false,
       });
 
-      alert('Message envoyé avec succès ');
+      Swal.fire({
+      icon: 'success',
+      title: 'Message envoyé',
+      text: 'Votre message a été envoyé avec succès. Nous vous répondrons rapidement.',
+      timer: 4000,              
+      timerProgressBar: true,
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#0f3d2e'
+    });
       this.contactForm.reset();
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de l’envoi ');
+      Swal.fire({
+      icon: 'error',
+      title: 'Erreur',
+      text: 'Une erreur est survenue lors de l’envoi du message. Veuillez réessayer.',
+      timer: 4000, 
+      timerProgressBar: true,
+      confirmButtonText: 'Fermer',
+      confirmButtonColor: '#dc3545'
+    });
+
     }
   }
 }
