@@ -15,8 +15,23 @@
               <option *ngFor="let city of availableCities" [value]="city.id">{{ city.name }}</option>
             </select>
           </div>
-          <div class="col-9 col-md-6">
-            <input type="text" class="form-control border-0 bg-light" placeholder="Adresse..." [(ngModel)]="address" (keyup.enter)="searchAddress()" >
+          <div class="col-9 col-md-6 position-relative">
+            <input 
+              type="text" 
+              class="form-control border-0 bg-light" 
+              placeholder="Adresse..." 
+              [(ngModel)]="address" 
+              (input)="onAddressInput()"
+              (keyup.enter)="searchAddress()">
+            
+            <ul class="list-group position-absolute w-100 shadow-sm" style="z-index: 2000;" *ngIf="suggestions.length > 0">
+              <li 
+                class="list-group-item list-group-item-action cursor-pointer" 
+                *ngFor="let s of suggestions" 
+                (click)="selectSuggestion(s)">
+                <small>{{ s.fullAddress }}</small>
+              </li>
+            </ul>
           </div>
           <div class="col-3 col-md-1">
             <button class="btn btn-primary w-100 fw-bold" (click)="searchAddress()"><i class="bi bi-search"></i></button>

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
@@ -26,4 +27,20 @@ export class GeocodingService {
       })
     );
   }
+  
+  // Nouvelle méthode pour l'autocomplétion
+  getSuggestions(query: string): Observable<any[]> {
+    if (!query.trim()) return of([]);
+
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${this.token}&country=fr&types=address&language=fr&limit=5`;
+
+    return this.http.get<any>(url).pipe(
+      map(res => res.features.map((f: any) => ({
+        fullAddress: f.place_name,
+        coords: { lon: f.center[0], lat: f.center[1] }
+      })))
+    );
+  }
+
+
 }
