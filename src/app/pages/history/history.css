@@ -1,9 +1,9 @@
-/* BACKGROUND */
 .historique-bg {
-  background: url('/assets/images/background_3.jpeg') center / cover no-repeat;
+  background: url('/assets/images/settings.jpeg') center / cover no-repeat;
   min-height: 100vh;
   padding: 140px 0 80px;
 }
+
 
 /* WRAPPER */
 .historique-wrapper {
