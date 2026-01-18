@@ -1,123 +1,67 @@
 <div class="container-fluid p-0 vh-100 position-relative overflow-hidden">
   
-  <!-- BARRE HAUTE -->
   <div class="position-absolute top-0 start-50 translate-middle-x mt-2 mt-md-1 px-md-0 col-12 col-md-9" style="z-index: 1050;">
     <div class="card shadow border-0 mx-1 mx-md-0 bg-white">
       <div class="card-body p-1">
         <div class="row g-2 align-items-center">
-
           <div class="col-3 col-md-1">
             <a class="navbar-brand" href="#">
               <img src="/assets/images/logo.png" alt="GoPark" class="w-75 h-100 ms-3">
             </a>
           </div>
-
           <div class="col-9 col-md-4">
-            <select
-              [ngModel]="selectedCity$ | async"
-              (ngModelChange)="onCityChange($event)"
-              class="form-select border-0 bg-light text-truncate"
-            >
+            <select [ngModel]="selectedCity$ | async" (ngModelChange)="onCityChange($event)" class="form-select border-0 bg-light text-truncate">
               <option value="all">Toutes les villes</option>
-              <option *ngFor="let city of availableCities" [value]="city.id">
-                {{ city.name }}
-              </option>
+              <option *ngFor="let city of availableCities" [value]="city.id">{{ city.name }}</option>
             </select>
           </div>
-
-          <!-- INPUT ADRESSE + AUTOCOMPLETE MAPBOX -->
-          <div class="col-9 col-md-6 position-relative">
-            <input
-              type="text"
-              class="form-control border-0 bg-light"
-              placeholder="Adresse..."
-              [(ngModel)]="address"
-              (input)="onAddressInput()"
-              (keyup.enter)="searchAddress()"
-              autocomplete="off"
-            />
-
-            <!-- LISTE AUTOCOMPLETE -->
-            <ul
-              *ngIf="addressSuggestions.length > 0"
-              class="list-group position-absolute w-100 shadow"
-              style="z-index:2000; max-height:260px; overflow-y:auto;"
-            >
-              <li
-                class="list-group-item list-group-item-action"
-                *ngFor="let s of addressSuggestions"
-                (click)="selectAddressSuggestion(s)"
-              >
-                <strong>{{ s.place_name.split(',')[0] }}</strong>
-                <div class="small text-muted">
-                  {{ s.place_name }}
-                </div>
-              </li>
-            </ul>
+          <div class="col-9 col-md-6">
+            <input type="text" class="form-control border-0 bg-light" placeholder="Adresse..." [(ngModel)]="address" (keyup.enter)="searchAddress()" >
           </div>
-
           <div class="col-3 col-md-1">
-            <button
-              class="btn btn-primary w-100 fw-bold"
-              (click)="searchAddress()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            <button class="btn btn-primary w-100 fw-bold" (click)="searchAddress()"><i class="bi bi-search"></i></button>
           </div>
-
         </div>
       </div>
     </div>
   </div>
 
-  <!-- LISTE PARKINGS MOBILE -->
   <div class="position-absolute bottom-0 bottom-md-auto top-md-0 end-0 mt-md-5 me-md-4 w-100 w-md-25 h-25 h-md-75 py-md-5 d-md-none d-block" style="z-index: 1000;">
     <div class="card shadow-lg border-0 h-100 bg-white bg-opacity-25" style="backdrop-filter: blur(8px); border-radius: 15px 15px 0 0;">
       <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center py-2 px-3 border-0">
-        <span>Parkings</span>
-        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">
-          {{ list.length }}
-        </span>
+         <span>Parkings</span>
+        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }} </span>
       </div>
-
       <div class="card-body overflow-auto p-2 bg-white bg-opacity-25">
         <ng-container *ngIf="parkings$ | async as parkingsList">
           <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm border-start border-primary border-5">
             <div class="card-body p-2">
-
               <div class="d-flex justify-content-between align-items-center p-1">
                 <div>
                   <h6 class="m-0 fw-bold text-dark">{{ p.name }}</h6>
                   <h6 class="m-0 fw-bold text-dark small text-muted">{{ p.city }}</h6>
                 </div>
-                <button class="btn btn-sm fw-bold fs-4" (click)="toggleFavorite(p)">
-                  <i class="bi" [ngClass]="isFavorite(p.id) ? 'bi-star-fill text-warning' : 'bi-star'"></i>
-                </button>
+                <div>
+                  <button class="btn btn-sm fw-bold fs-4" (click)="toggleFavorite(p)">
+                    <i class="bi" [ngClass]="isFavorite(p.id) ? 'bi-star-fill text-warning' : 'bi-star'"></i>
+                  </button>
+                </div>
               </div>
-
               <div class="d-flex justify-content-between align-items-center">
-                <p class="text-muted small mb-0">
-                  <i class="bi bi-geo-alt-fill text-primary"></i> {{ p.address }}
-                </p>
+                <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-primary"></i> {{ p.address }}</p>
                 <button class="btn btn-sm fw-bold fs-4" (click)="focusOnParking(p)">
                   <i class="bi bi-arrow-right-circle"></i>
                 </button>
               </div>
-
               <div class="d-flex justify-content-between align-items-center mt-2">
                 <div class="d-flex">
                   <span class="badge p-2 me-1" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
                     Places : {{ p.availablePlaces ?? 'N/A' }}
                   </span>
-                  <span class="badge p-2" [ngClass]="p.status === 'OPEN' ? 'bg-success' : 'bg-danger'">
-                    {{ p.status }}
-                  </span>
+                  <span class="badge p-2" [ngClass]="p.status == 'OPEN' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
                 </div>
-                <button class="btn btn-sm fw-bold fs-4">
-                  <i class="bi bi-ticket-perforated"></i>
-                </button>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
               </div>
-
             </div>
           </div>
         </ng-container>
@@ -125,7 +69,49 @@
     </div>
   </div>
 
-  <!-- MAP -->
+  <div class="position-absolute top-2 end-0 mt-4 me-4 h-100 w-25 py-5 d-none d-md-block" style="z-index: 1000;">
+    <div class="card shadow border-0 h-100 bg-white bg-opacity-25" style="backdrop-filter: blur(5px);">
+      <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+        <span>Parkings</span>
+        <span class="badge bg-white text-primary" *ngIf="parkings$ | async as list">{{ list.length }} </span>
+      </div>
+      <div class="card-body overflow-auto p-2 bg-white bg-opacity-25">
+        <ng-container *ngIf="parkings$ | async as parkingsList">
+          <div *ngFor="let p of parkingsList" class="card mb-2 border-0 shadow-sm border-start border-primary border-5">
+            <div class="card-body p-2">
+              <div class="d-flex justify-content-between align-items-center p-1">
+                <div>
+                  <h6 class="m-0 fw-bold text-dark">{{ p.name }}</h6>
+                  <h6 class="m-0 fw-bold text-dark small text-muted">{{ p.city }}</h6>
+                </div>
+                <div>
+                  <button class="btn btn-sm fw-bold fs-4" (click)="toggleFavorite(p)">
+                    <i class="bi" [ngClass]="isFavorite(p.id) ? 'bi-star-fill text-warning' : 'bi-star'"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-primary"></i> {{ p.address }}</p>
+                <button class="btn btn-sm fw-bold fs-4" (click)="focusOnParking(p)">
+                  <i class="bi bi-arrow-right-circle"></i>
+                </button>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="d-flex">
+                  <span class="badge p-2 me-1" [ngClass]="p.availablePlaces > 5 ? 'bg-success' : 'bg-danger'">
+                    Places : {{ p.availablePlaces ?? 'N/A' }}
+                  </span>
+                  <span class="badge p-2" [ngClass]="p.status == 'OPEN' ? 'bg-success' : 'bg-danger'">{{ p.status }}</span>
+                </div>
+                <button class="btn btn-sm fw-bold fs-4"><i class="bi bi-ticket-perforated"></i></button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
   <ng-container *ngIf="parkings$ | async as parkingsList; else loadingOrEmpty">
     <div *ngIf="!isLoading; else loadingSpinner" class="h-100">
       <app-map [parkings]="parkingsList" [userCoords]="coords"></app-map>
