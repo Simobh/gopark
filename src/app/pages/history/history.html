@@ -1,76 +1,109 @@
 <div class="container-fluid historique-bg">
 
-<app-navbar></app-navbar>
+  <app-navbar></app-navbar>
 
   <div class="container historique-wrapper">
-    <div class="historique-header">
 
+    <!-- HEADER -->
+    <div class="historique-header">
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
         <div>
           <div class="d-flex align-items-center gap-3 mb-2">
             <i class="bi bi-clock-history"></i>
             <h2 class="fw-bold mb-0">Historique</h2>
           </div>
-
           <p class="text-muted mb-0">
             Les parkings que vous avez consultés récemment.
           </p>
         </div>
-        <button (click)="clearAllHistory()" class="fw-bold  btn btn-sm btn-outline-danger d-flex align-items-center gap-2">
+
+        <!-- Bouton Vider (conditionnel) -->
+        <ng-container *ngIf="historyItems$ | async as historyList">
+          <button
+            *ngIf="historyList.length > 0"
+            (click)="clearAllHistory()"
+            class="fw-bold btn btn-sm btn-outline-danger d-flex align-items-center gap-2">
             <i class="bi bi-trash3-fill"></i>
             Vider
-        </button>
+          </button>
+        </ng-container>
 
       </div>
 
       <hr class="my-4">
     </div>
+
+    <!-- CONTENU -->
     <div class="historique-section">
 
       <ng-container *ngIf="historyItems$ | async as historyList">
-      <div *ngFor="let h of historyList" class="historique-card">
-        <div class="row align-items-center g-4">
-          <div class="col-12 col-md-3 border-end">
-            <div class="position-relative">
-              <img
-                src="/assets/images/recherche_parking.png"
-                class="historique-img"
-              />
-              <span class="badge bg-dark position-absolute top-0 start-0 m-2">
-                Vu récemment
-              </span>
+
+        <!-- LISTE HISTORIQUE -->
+        <div *ngFor="let h of historyList" class="historique-card">
+          <div class="row align-items-center g-4">
+
+            <div class="col-12 col-md-3 border-end">
+              <div class="position-relative">
+                <img
+                  src="/assets/images/recherche_parking.png"
+                  class="historique-img"
+                />
+                <span class="badge bg-dark position-absolute top-0 start-0 m-2">
+                  Vu récemment
+                </span>
+              </div>
             </div>
-          </div>
-          <div class="col-12 col-md-6 ps-md-4">
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <h5 class="fw-bold mb-0">{{ h.parking.name }}</h5>
-              <span class="badge bg-success-subtle text-success">
-                Historique
-              </span>
+
+            <div class="col-12 col-md-6 ps-md-4">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <h5 class="fw-bold mb-0">{{ h.parking.name }}</h5>
+                <span class="badge bg-success-subtle text-success">
+                  Historique
+                </span>
+              </div>
+
+              <div class="info-row">
+                <span>{{ h.parking.address }}</span>
+              </div>
+
+              <div class="info-row info-date">
+                <span>
+                  Consulté le {{ formatDate(h.searchedAt) | date:'dd/MM/yyyy à HH:mm' }}
+                </span>
+              </div>
             </div>
-            <div class="info-row">
-              <span>{{ h.parking.address}}</span>
-            </div>
-            <div class="info-row info-date">
-              <span>Consulté le {{ formatDate(h.searchedAt) | date:'dd/MM/yyyy à HH:mm' }}</span>
-            </div>
-          </div>
-          <div class="col-12 col-md-3 text-md-end">
-            <button 
-                [routerLink]="['/search']" 
+
+            <div class="col-12 col-md-3 text-md-end">
+              <button
+                [routerLink]="['/search']"
                 [queryParams]="{ lat: h.parking.position.lat, lon: h.parking.position.lon }"
-                class="fw-bold  btn btn-primary btn-sm w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
+                class="fw-bold btn btn-primary btn-sm w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
                 <i class="bi bi-geo-alt"></i>
                 Voir
-            </button>
-            <button (click)="removeHistoryItem(h.firebaseId)" class="fw-bold btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
-              <i class="bi bi-trash"></i>
-               Supprimer
-            </button>
+              </button>
+
+              <button
+                (click)="removeHistoryItem(h.firebaseId)"
+                class="fw-bold btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-trash"></i>
+                Supprimer
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+
+        <!-- HISTORIQUE VIDE -->
+        <div
+          *ngIf="historyList.length === 0"
+          class="text-center text-muted py-5">
+          <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+          <p class="mb-0">Votre historique est vide.</p>
+        </div>
+
       </ng-container>
+
     </div>
   </div>
 </div>
