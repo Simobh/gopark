@@ -28,41 +28,82 @@ export class Contact { contactForm: any;
   }
 
   async submit() {
-    console.log('SUBMIT CALLED');
-    if (this.contactForm.invalid) return;
+  console.log('SUBMIT CALLED');
 
-    try {
-      await addDoc(collection(this.firestore, 'contactMessages'), {
-        name: this.contactForm.value.name,
-        email: this.contactForm.value.email,
-        phone: this.contactForm.value.phone,
-        message: this.contactForm.value.message,
-        createdAt: new Date(),
-        read: false,
-      });
+  
+  if (this.contactForm.invalid) {
 
-      Swal.fire({
+    const errors: string[] = [];
+
+    if (this.contactForm.get('name')?.invalid) {
+      errors.push('Le nom est obligatoire.');
+    }
+
+    if (this.contactForm.get('email')?.invalid) {
+      errors.push('Une adresse e-mail valide est obligatoire.');
+    }
+
+    if (this.contactForm.get('message')?.invalid) {
+      errors.push('Le message ne peut pas être vide.');
+    }
+
+    if (this.contactForm.get('consent')?.invalid) {
+      errors.push('Vous devez autoriser la conservation de vos données.');
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Formulaire incomplet',
+      html: `
+        <div style="text-align:left">
+          <p>Merci de corriger les points suivants :</p>
+          <ul>
+            ${errors.map(e => `<li>${e}</li>`).join('')}
+          </ul>
+        </div>
+      `,
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false
+    });
+
+    return;
+  }
+
+  
+  try {
+    await addDoc(collection(this.firestore, 'contactMessages'), {
+      name: this.contactForm.value.name,
+      email: this.contactForm.value.email,
+      phone: this.contactForm.value.phone,
+      message: this.contactForm.value.message,
+      createdAt: new Date(),
+      read: false,
+    });
+
+    Swal.fire({
       icon: 'success',
       title: 'Message envoyé',
       text: 'Votre message a été envoyé avec succès. Nous vous répondrons rapidement.',
-      timer: 4000,              
+      timer: 4000,
       timerProgressBar: true,
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#0f3d2e'
+      showConfirmButton: false
     });
-      this.contactForm.reset();
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
+
+    this.contactForm.reset();
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
       icon: 'error',
       title: 'Erreur',
       text: 'Une erreur est survenue lors de l’envoi du message. Veuillez réessayer.',
-      timer: 4000, 
+      timer: 4000,
       timerProgressBar: true,
-      confirmButtonText: 'Fermer',
-      confirmButtonColor: '#dc3545'
+      showConfirmButton: false
     });
-
-    }
   }
+}
+
 }
