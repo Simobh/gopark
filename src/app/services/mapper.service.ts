@@ -28,7 +28,7 @@ export class ParkingMapperService {
         address: address || undefined,
         availablePlaces: r.plarel ?? undefined,
         totalCapacity: r.placal ?? undefined,
-        status: r.placal > 0 ? 'OPEN' : 'UNKNOWN'
+        status: r.placal > 0 ? 'Ouvert' : 'Inconnu'
       };
     });
   }
@@ -52,8 +52,8 @@ export class ParkingMapperService {
 
       status:
         r.etat_descriptif?.toLowerCase() === 'ouvert'
-          ? 'OPEN'
-          : 'CLOSED'
+          ? 'Ouvert'
+          : 'Fermé'
     }));
   }
 
@@ -78,7 +78,7 @@ export class ParkingMapperService {
           : undefined,
 
       totalCapacity: r.nb_places,
-      status: 'UNKNOWN'
+      status: 'Inconnu'
     }));
   }
 }
