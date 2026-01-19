@@ -321,7 +321,7 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
       Swal.fire({
         icon: 'success',
         title: 'Place réservée !',
-        text: 'Retrouvez votre ticket dans votre historique.',
+        text: 'Votre réservation est désormais disponible dans la page "Mes réservations"',
         timer: 3000,
         showConfirmButton: false
       });
