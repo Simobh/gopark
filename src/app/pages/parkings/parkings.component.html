@@ -163,7 +163,7 @@
         </div>
         <div class="d-flex align-items-center text-muted small">
           <i class="bi bi-clock-history me-2"></i>
-          <span>Environ {{ routeInfo.duration }} min</span>
+          <span>Environ {{ formatDuration(routeInfo.duration) }}</span>
         </div>
       </div>
       <button class="btn btn-outline-danger btn-sm rounded-circle ms-3" (click)="clearRoute()">

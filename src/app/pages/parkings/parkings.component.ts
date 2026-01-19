@@ -208,6 +208,21 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     }
   }
+  formatDuration(minutes: number): string {
+    if (!minutes) return '';
+
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+
+    if (h > 0) {
+      // Si on a des heures (ex: 90min -> 1h 30 min)
+      // Si m est 0, on affiche juste "1 h"
+      return `${h} h ${m > 0 ? m + ' min' : ''}`;
+    }
+
+    // Sinon on affiche juste les minutes
+    return `${m} min`;
+  }
 
   ngAfterViewInit(): void {
     this.route.queryParams.subscribe(params => {
