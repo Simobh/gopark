@@ -205,19 +205,41 @@
         </div>
 
         <form (ngSubmit)="confirmReservation()">
-          <div class="mb-3">
-            <label class="form-label fw-bold small text-muted">Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control bg-light border-0" [(ngModel)]="bookingForm.date" name="bookDate">
+
+          <div class="row g-2 mb-3">
+            <div class="col-12">
+              <label class="form-label fw-bold small text-primary mb-1"><i class="bi bi-box-arrow-in-right me-1"></i> Arrivée</label>
+            </div>
+            <div class="col-7">
+              <input type="date"
+                     class="form-control bg-light border-0"
+                     [(ngModel)]="bookingForm.arrivalDate"
+                     name="arrDate"
+                     [min]="minDate">
+            </div>
+            <div class="col-5">
+              <input type="time"
+                     class="form-control bg-light border-0"
+                     [(ngModel)]="bookingForm.arrival"
+                     name="arrTime">
+            </div>
           </div>
 
           <div class="row g-2 mb-3">
-            <div class="col-6">
-              <label class="form-label fw-bold small text-muted">Arrivée <span class="text-danger">*</span></label>
-              <input type="time" class="form-control bg-light border-0" [(ngModel)]="bookingForm.arrival" name="bookArrival">
+            <div class="col-12">
+              <label class="form-label fw-bold small text-danger mb-1"><i class="bi bi-box-arrow-right me-1"></i> Départ</label>
             </div>
-            <div class="col-6">
-              <label class="form-label fw-bold small text-muted">Départ <span class="text-danger">*</span></label>
-              <input type="time" class="form-control bg-light border-0" [(ngModel)]="bookingForm.departure" name="bookDeparture">
+            <div class="col-7">
+              <input type="date"
+                     class="form-control bg-light border-0"
+                     [(ngModel)]="bookingForm.departureDate"
+                     name="depDate"
+                     [min]="bookingForm.arrivalDate"> </div>
+            <div class="col-5">
+              <input type="time"
+                     class="form-control bg-light border-0"
+                     [(ngModel)]="bookingForm.departure"
+                     name="depTime">
             </div>
           </div>
 
@@ -227,11 +249,13 @@
               <span class="input-group-text border-0 bg-secondary text-white"><i class="bi bi-car-front-fill"></i></span>
               <input type="text"
                      class="form-control bg-light border-0 fw-bold"
-                     placeholder="AB-123-CD"
+                     placeholder="AA-123-BB"
                      [(ngModel)]="bookingForm.plate"
                      name="bookPlate"
-                     style="text-transform: uppercase;">
+                     style="text-transform: uppercase;"
+                     maxlength="9">
             </div>
+            <div class="form-text small mt-1 ms-1">Format requis : XX-000-XX</div>
           </div>
 
           <div class="d-flex justify-content-end mt-4">

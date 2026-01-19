@@ -41,9 +41,10 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   showReservationModal = false;
   selectedParking: any = null;
   bookingForm = {
-    date: new Date().toISOString().split('T')[0], // Date du jour
-    arrival: '',
-    departure: '',
+    arrivalDate: new Date().toISOString().split('T')[0],   // Date arrivée
+    arrival: '',                                           // Heure arrivée
+    departureDate: new Date().toISOString().split('T')[0], // Date départ
+    departure: '',                                         // Heure départ
     plate: ''
   };
 
@@ -266,17 +267,26 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   openReservation(parking: any) {
     if (!this.userId) {
-      Swal.fire('Oups', 'Connectez-vous pour réserver une place.', 'info');
+      Swal.fire('Oups', 'Connectez-vous pour réserver.', 'info');
       return;
     }
-
-    // Sécurité visuelle si places à 0
     if ((parking.availablePlaces || 0) <= 0) {
-      Swal.fire('Complet', 'Ce parking n\'a plus de places disponibles.', 'warning');
+      Swal.fire('Complet', 'Ce parking est complet.', 'warning');
       return;
     }
 
     this.selectedParking = parking;
+
+    // Reset du formulaire avec dates du jour par défaut
+    const today = new Date().toISOString().split('T')[0];
+    this.bookingForm = {
+      arrivalDate: today,
+      arrival: '',
+      departureDate: today,
+      departure: '',
+      plate: ''
+    };
+
     this.showReservationModal = true;
   }
 
@@ -284,37 +294,64 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showReservationModal = false;
     this.selectedParking = null;
     this.bookingForm = {
-      date: new Date().toISOString().split('T')[0],
+      arrivalDate: new Date().toISOString().split('T')[0],
       arrival: '',
+      departureDate: new Date().toISOString().split('T')[0],
       departure: '',
       plate: ''
     };
   }
 
+  get minDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
   // 3. Valide la réservation via le Service
   async confirmReservation() {
-    // Vérification simple
-    if (!this.bookingForm.arrival || !this.bookingForm.departure || !this.bookingForm.plate) {
+    // 1. Vérification champs vides
+    if (!this.bookingForm.arrival || !this.bookingForm.departure ||
+        !this.bookingForm.plate || !this.bookingForm.arrivalDate ||
+        !this.bookingForm.departureDate) {
       Swal.fire('Champs manquants', 'Merci de remplir tous les champs.', 'error');
+      return;
+    }
+
+    // 2. Validation Matricule
+    const plateRegex = /^[A-Za-z]{2}-\d{3}-[A-Za-z]{2}$/;
+    if (!plateRegex.test(this.bookingForm.plate)) {
+      Swal.fire('Format invalide', 'La plaque doit être au format AA-123-BB.', 'warning');
+      return;
+    }
+
+    // 3. Validation Temporelle (Dates complètes)
+    const start = new Date(`${this.bookingForm.arrivalDate}T${this.bookingForm.arrival}`);
+    const end = new Date(`${this.bookingForm.departureDate}T${this.bookingForm.departure}`);
+    const now = new Date();
+
+    // A. Pas dans le passé
+    if (start < now) {
+      Swal.fire('Date invalide', 'Le début de la réservation ne peut pas être dans le passé.', 'warning');
+      return;
+    }
+
+    // B. Fin après début
+    if (end <= start) {
+      Swal.fire('Incohérence', 'La date de départ doit être postérieure à la date d\'arrivée.', 'warning');
       return;
     }
 
     this.isLoading = true;
 
     try {
-      // Appel du nouveau service
       await this.reservationService.createReservation(
         this.userId!,
         this.selectedParking,
         this.bookingForm
       );
 
-      // Mise à jour visuelle immédiate (UX)
-      // On le fait manuellement car l'observable de l'API ne se mettra pas à jour tout seul
       if (this.selectedParking.availablePlaces) {
         this.selectedParking.availablePlaces--;
       }
-
       this.isLoading = false;
       this.closeReservation();
 
@@ -326,11 +363,18 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
         showConfirmButton: false
       });
 
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
       this.isLoading = false;
-      Swal.fire('Erreur', 'Impossible de confirmer la réservation.', 'error');
+      if (error.message === 'CONFLICT_DETECTED') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Créneau indisponible',
+          text: 'Ce véhicule a déjà une réservation sur cette période.',
+        });
+      } else {
+        console.error(error);
+        Swal.fire('Erreur', 'Impossible de confirmer la réservation.', 'error');
+      }
     }
   }
-
 }

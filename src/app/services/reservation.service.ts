@@ -10,6 +10,7 @@ import {
   deleteDoc,
   query,
   where,
+  getDocs,
   collectionData
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
@@ -27,23 +28,60 @@ export class ReservationService {
    */
   async createReservation(userId: string, parking: any, formData: any): Promise<void> {
     try {
-      // --- A. Création du Ticket (Historique) ---
-     const reservationData = {
-      userId,
-      parking,
-      date: formData.date,
-      arrival: formData.arrival,
-      departure: formData.departure,
-      licensePlate: formData.plate.toUpperCase(),
-      status: 'active',
-      createdAt: new Date()
-    };
+      // Construction des dates complètes ISO pour la comparaison
+      // Ex: "2024-01-20T14:30:00"
+      const fullStart = `${formData.arrivalDate}T${formData.arrival}:00`;
+      const fullEnd = `${formData.departureDate}T${formData.departure}:00`;
 
+      // 1. Vérification conflit
+      const hasConflict = await this.checkReservationConflict(
+        userId,
+        formData.plate.toUpperCase(),
+        fullStart,
+        fullEnd
+      );
+
+      if (hasConflict) {
+        throw new Error("CONFLICT_DETECTED");
+      }
+
+      // 2. Création de l'objet
+      const reservationData = {
+        userId: userId,
+        status: 'active',
+        createdAt: new Date(),
+
+        // Données d'affichage (séparées)
+        arrivalDate: formData.arrivalDate,
+        arrival: formData.arrival,
+        departureDate: formData.departureDate,
+        departure: formData.departure,
+        licensePlate: formData.plate.toUpperCase(),
+
+        // Données techniques (pour le tri et les conflits)
+        fullStartTime: fullStart,
+        fullEndTime: fullEnd,
+
+        // Objet Parking imbriqué
+        parking: {
+          id: parking.id,
+          name: parking.name,
+          city: parking.city,
+          address: parking.address || '',
+          availablePlaces: parking.availablePlaces,
+          totalCapacity: parking.totalCapacity || 0,
+          status: parking.status || 'Ouvert',
+          position: {
+            lat: parking.position.lat,
+            lon: parking.position.lon
+          }
+        }
+      };
 
       const reservationsRef = collection(this.firestore, 'reservations');
       await addDoc(reservationsRef, reservationData);
 
-      // --- B. Mise à jour du stock de places ---
+      // 3. Mise à jour du stock
       await this.updateParkingStock(parking);
 
     } catch (error) {
@@ -51,6 +89,7 @@ export class ReservationService {
       throw error;
     }
   }
+
   getReservations(userId: string): Observable<any[]> {
     const ref = collection(this.firestore, this.collectionName);
     const q = query(ref, where('userId', '==', userId));
@@ -71,26 +110,47 @@ export class ReservationService {
     const parkingSnap = await getDoc(parkingRef);
 
     if (parkingSnap.exists()) {
-      // CAS 1 : Le parking est déjà connu de Firestore (déjà modifié auparavant)
-      // On enlève juste 1 place
       await setDoc(parkingRef, {
         availablePlaces: increment(-1),
         lastUpdated: new Date()
       }, { merge: true });
-
     } else {
-      // CAS 2 : Première fois qu'on touche à ce parking (il vient de l'API)
-      // On le crée dans Firestore avec (Places API - 1)
       const currentPlaces = parking.availablePlaces && parking.availablePlaces > 0
                             ? parking.availablePlaces
                             : 0;
-
       await setDoc(parkingRef, {
-        ...parking, // On sauvegarde nom, coords, city, etc. pour usage futur
+        ...parking,
         availablePlaces: currentPlaces - 1,
         source: 'api_import',
         lastUpdated: new Date()
       });
     }
   }
+
+  async checkReservationConflict(userId: string, plate: string, newStartIso: string, newEndIso: string): Promise<boolean> {
+    const reservationsRef = collection(this.firestore, 'reservations');
+
+    // On récupère toutes les réservations actives de l'utilisateur
+    const q = query(
+      reservationsRef,
+      where('userId', '==', userId),
+      where('status', '==', 'active')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const existingReservations = querySnapshot.docs.map(doc => doc.data());
+
+    // Vérification du chevauchement avec des dates complètes
+    return existingReservations.some((res: any) => {
+      // 1. Si ce n'est pas la même voiture, on ignore
+      if (res.licensePlate !== plate) return false;
+
+      // 2. Formule de chevauchement temporel standard
+      // (StartA < EndB) et (EndA > StartB)
+      // On utilise les champs 'fullStartTime' et 'fullEndTime' qu'on va stocker
+      return (newStartIso < res.fullEndTime && newEndIso > res.fullStartTime);
+    });
+  }
+
+
 }

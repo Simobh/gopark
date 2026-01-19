@@ -38,24 +38,40 @@
               {{ r.parking.name }}
             </h5>
 
-            <div class="info-row">
+            <div class="info-row text-muted small mb-2">
+              <i class="bi bi-geo-alt-fill me-1 text-primary"></i>
               {{ r.parking.address }}
             </div>
 
-            <div class="info-row info-date">
-              Réservé le
-              {{ formatDate(r.createdAt) | date:'dd/MM/yyyy à HH:mm' }}
+            <div class="bg-light rounded p-2 mb-2 border">
+              <div class="d-flex align-items-center mb-1">
+                <div>
+                  <small class="text-muted d-block" style="line-height: 1;">Arrivée</small>
+                  <span class="fw-bold">
+                    {{ r.arrivalDate | date:'dd/MM/yyyy' }} <span class="text-muted">à</span> {{ r.arrival }}
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <div>
+                  <small class="text-muted d-block" style="line-height: 1;">Départ</small>
+                  <span class="fw-bold">
+                    {{ r.departureDate | date:'dd/MM/yyyy' }} <span class="text-muted">à</span> {{ r.departure }}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div class="info-row mt-2">
-              Heures :  {{ r.arrival }} → {{ r.departure }}
+            <div class="info-row small">
+              <span class="text-muted">Réservé le :</span> {{ formatDate(r.createdAt) | date:'dd/MM/yyyy à HH:mm' }}
             </div>
 
-            <div class="info-row">
-              Plaque d'immatriculation : {{ r.licensePlate }}
+            <div class="info-row mt-1">
+              <span class="badge bg-white border text-dark">
+                <i class="bi bi-car-front-fill me-1"></i> {{ r.licensePlate }}
+              </span>
             </div>
           </div>
-
           <!-- ACTIONS -->
           <div class="col-12 col-md-3 text-md-end">
 
