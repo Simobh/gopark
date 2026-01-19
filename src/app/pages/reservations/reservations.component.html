@@ -1,49 +1,107 @@
 <app-navbar></app-navbar>
 
-<div style="height:80px;"></div>
+<div class="container-fluid historique-bg">
+  <div class="container historique-wrapper">
 
-<!-- BACKGROUND -->
-<div class="page-background">
-  <div class="page-overlay">
+    <!-- HEADER -->
+    <div class="historique-header">
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <i class="bi bi-calendar-check"></i>
+        <h2 class="fw-bold mb-0">Réservations</h2>
+      </div>
 
-    <div class="container py-5">
+      <p class="text-muted mb-0">
+        Retrouvez l’historique de vos réservations.
+      </p>
 
-      <div class="card border-0 shadow-sm rounded-4 p-4">
+      <hr class="my-4">
+    </div>
 
-        <div class="d-flex align-items-center gap-3 mb-2">
-          <i class="bi bi-calendar-check fs-3 text-primary"></i>
-          <h4 class="fw-bold mb-0">Réservations</h4>
+    <!-- CONTENU -->
+    <ng-container *ngIf="ReservationsItems$ | async as reservations">
+
+      <!-- LISTE DES RÉSERVATIONS -->
+      <div *ngFor="let r of reservations" class="historique-card mb-4">
+        <div class="row align-items-center g-4">
+
+          <!-- IMAGE -->
+          <div class="col-12 col-md-3 border-end">
+            <img
+              src="/assets/images/recherche_parking.png"
+              class="historique-img"
+            />
+          </div>
+
+          <!-- INFOS -->
+          <div class="col-12 col-md-6 ps-md-4">
+            <h5 class="fw-bold mb-1">
+              {{ r.parking.name }}
+            </h5>
+
+            <div class="info-row">
+              {{ r.parking.address }}
+            </div>
+
+            <div class="info-row info-date">
+              Réservé le
+              {{ formatDate(r.createdAt) | date:'dd/MM/yyyy à HH:mm' }}
+            </div>
+
+            <div class="info-row mt-2">
+              🕒 {{ r.arrival }} → {{ r.departure }}
+            </div>
+
+            <div class="info-row">
+              🚗 {{ r.licensePlate }}
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="col-12 col-md-3 text-md-end">
+
+            <button
+              [routerLink]="['/search']"
+              [queryParams]="{
+                lat: r.parking.position.lat,
+                lon: r.parking.position.lon
+              }"
+              class="fw-bold btn btn-primary btn-sm w-100 mb-2
+                     d-flex align-items-center justify-content-center gap-2">
+              <i class="bi bi-geo-alt"></i>
+              Voir
+            </button>
+
+            <button
+              class="fw-bold btn btn-outline-danger btn-sm w-100
+                     d-flex align-items-center justify-content-center gap-2"
+              (click)="cancelReservation(r.firebaseId)">
+              <i class="bi bi-x-circle"></i>
+              Annuler
+            </button>
+
+          </div>
+
         </div>
+      </div>
 
-        <p class="text-muted mb-4">
-          Retrouvez l’historique de vos réservations de parking.
-        </p>
+      <!-- ÉTAT VIDE -->
+      <div
+        *ngIf="reservations.length === 0"
+        class="text-center text-muted py-5">
 
-        <hr class="mb-4">
+        <i class="bi bi-journal-x fs-1 d-block mb-3"></i>
+        <p class="fw-semibold mb-2">Aucune réservation</p>
 
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
-
-          <i class="bi bi-journal-x fs-1 text-muted mb-3"></i>
-
-          <h5 class="fw-bold mb-2">Aucune réservation</h5>
-
-          <p class="text-muted mb-4">
-            Vous n’avez pas encore effectué de réservation.
-          </p>
-
-          <button
-            class="btn btn-primary px-5 py-2"
-            (click)="goToSearch()"
-          >
-            <i class="bi bi-search me-2"></i>
-            Rechercher un parking
-          </button>
-
-        </div>
+        <button
+          class="btn btn-primary mt-2"
+          (click)="goToSearch()">
+          <i class="bi bi-search me-2"></i>
+          Rechercher un parking
+        </button>
 
       </div>
 
-    </div>
+    </ng-container>
 
   </div>
 </div>

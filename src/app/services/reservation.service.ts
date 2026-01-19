@@ -6,14 +6,20 @@ import {
   doc,
   getDoc,
   setDoc,
-  increment
+  increment,
+  deleteDoc,
+  query,
+  where,
+  collectionData
 } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReservationService {
   private firestore = inject(Firestore);
+  private collectionName = 'reservations';
 
   /**
    * 1. Crée le ticket de réservation
@@ -22,19 +28,17 @@ export class ReservationService {
   async createReservation(userId: string, parking: any, formData: any): Promise<void> {
     try {
       // --- A. Création du Ticket (Historique) ---
-      const reservationData = {
-        userId: userId,
-        parkingId: parking.id,
-        parkingName: parking.name,
-        parkingCity: parking.city,
-        parkingAddress: parking.address,
-        date: formData.date,
-        arrival: formData.arrival,     // Correspond au ngModel du formulaire
-        departure: formData.departure, // Correspond au ngModel du formulaire
-        licensePlate: formData.plate.toUpperCase(),
-        status: 'active',
-        createdAt: new Date()
-      };
+     const reservationData = {
+      userId,
+      parking,
+      date: formData.date,
+      arrival: formData.arrival,
+      departure: formData.departure,
+      licensePlate: formData.plate.toUpperCase(),
+      status: 'active',
+      createdAt: new Date()
+    };
+
 
       const reservationsRef = collection(this.firestore, 'reservations');
       await addDoc(reservationsRef, reservationData);
@@ -46,6 +50,16 @@ export class ReservationService {
       console.error('Erreur transaction réservation :', error);
       throw error;
     }
+  }
+  getReservations(userId: string): Observable<any[]> {
+    const ref = collection(this.firestore, this.collectionName);
+    const q = query(ref, where('userId', '==', userId));
+    return collectionData(q, { idField: 'firebaseId' });
+  }
+
+  cancelReservation(firebaseId: string) {
+    const docRef = doc(this.firestore, `${this.collectionName}/${firebaseId}`);
+    return deleteDoc(docRef);
   }
 
   /**
