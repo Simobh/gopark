@@ -21,13 +21,13 @@
     <ng-container *ngIf="ReservationsItems$ | async as reservations">
 
       <!-- LISTE DES RÉSERVATIONS -->
-      <div *ngFor="let r of reservations" class="historique-card mb-4">
+      <div *ngFor="let r of reservations" class="historique-card mb-2">
         <div class="row align-items-center g-4">
 
           <!-- IMAGE -->
           <div class="col-12 col-md-3 border-end">
             <img
-              src="/assets/images/recherche_parking.png"
+              src="/assets/images/reservation_image.png"
               class="historique-img"
             />
           </div>
