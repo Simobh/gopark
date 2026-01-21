@@ -14,7 +14,7 @@ Gopark est une application web moderne de réservation de places de parking, con
 ### Administration
 *   **Centre de Notifications** : Interface dédiée (`admin/notifications`) pour la gestion des alertes et le suivi de l'activité.
 
-## 🛠 Stack Technique
+## Stack Technique
 
 Ce projet repose sur une architecture robuste et moderne :
 
