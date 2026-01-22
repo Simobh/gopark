@@ -45,10 +45,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.mapboxgl = await import('mapbox-gl');
+    const mod = await import('mapbox-gl');
+    this.mapboxgl = (mod as any).default ?? mod;
+    this.mapboxgl.accessToken = this.mapboxToken;
 
     this.map = new this.mapboxgl.Map({
-      accessToken: this.mapboxToken,
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [7.75, 48.57],
@@ -217,7 +218,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
           </div>
         </div>
       `;
-      
+
       popupNode.querySelector('.btn-close-custom')?.addEventListener('click', () => {
         popup.remove(); // Ferme le popup manuellement
       });
