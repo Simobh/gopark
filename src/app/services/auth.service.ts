@@ -629,7 +629,7 @@ export class AuthService {
     }
   }
 
-  private handleError(error: any): string {
+  public handleError(error: any): string {
     // Si c'est déjà une string, la retourner
     if (typeof error === 'string') {
       return error;

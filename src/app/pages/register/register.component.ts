@@ -84,7 +84,8 @@ export class RegisterComponent {
         `Inscription réussie ! Un email de vérification a été envoyé à ${this.email()}`
       );
     } catch (e: any) {
-      this.error.set(e.message ?? e);
+      const friendlyMessage = this.authService.handleError(e);
+      this.error.set(friendlyMessage);
     } finally {
       this.loading.set(false);
     }
@@ -96,7 +97,7 @@ export class RegisterComponent {
     try {
       await this.authService.loginWithGoogle();
     } catch (e: any) {
-      this.error.set(e);
+      this.error.set(this.authService.handleError(e));
     } finally {
       this.loading.set(false);
     }
