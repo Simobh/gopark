@@ -248,14 +248,13 @@
             <div class="input-group">
               <span class="input-group-text border-0 bg-secondary text-white"><i class="bi bi-car-front-fill"></i></span>
               <input type="text"
-                     class="form-control bg-light border-0 fw-bold"
-                     placeholder="AA-123-BB"
-                     [(ngModel)]="bookingForm.plate"
-                     name="bookPlate"
-                     style="text-transform: uppercase;"
-                     maxlength="9">
-            </div>
-            <div class="form-text small mt-1 ms-1">Format requis : XX-000-XX</div>
+                    class="form-control bg-light border-0 fw-bold"
+                    placeholder="AA-123-BB"
+                    [(ngModel)]="bookingForm.plate"
+                    (input)="formatPlate($event)"
+                    name="bookPlate"
+                    maxlength="9">
+              </div>
           </div>
 
           <div class="d-flex justify-content-end mt-4">

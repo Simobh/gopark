@@ -321,7 +321,25 @@ export class ParkingsComponent implements OnInit, OnDestroy, AfterViewInit {
     return new Date().toISOString().split('T')[0];
   }
 
-  // 3. Valide la réservation via le Service
+  formatPlate(event: any) {
+    let input = event.target.value;
+    let rawValue = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (rawValue.length > 7) {
+      rawValue = rawValue.substring(0, 7);
+    }
+    let formattedValue = rawValue;
+
+    if (rawValue.length > 2) {
+       formattedValue = rawValue.substring(0, 2) + '-' + rawValue.substring(2);
+    }
+    if (rawValue.length > 5) {
+       formattedValue = formattedValue.substring(0, 6) + '-' + rawValue.substring(5);
+    }
+    this.bookingForm.plate = formattedValue;
+    if (input !== formattedValue) {
+      event.target.value = formattedValue;
+    }
+  }
   async confirmReservation() {
     // 1. Vérification champs vides
     if (!this.bookingForm.arrival || !this.bookingForm.departure ||
